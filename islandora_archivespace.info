@@ -1,0 +1,8 @@
+name = Islandora Archivespace
+description = "Integrate the metadata capibilities of Archivespace with Islandora."
+dependencies[] = islandora
+dependencies[] = islandora_rest
+package = Islandora Solution Packs
+version = 7.x-dev
+core = 7.x
+php = 5.3
