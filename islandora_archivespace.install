@@ -1,0 +1,22 @@
+<?php
+
+/**
+ * @file
+ * This file contains all install related hooks.
+ */
+
+/**
+ * Implements hook_uninstall().
+ */
+function islandora_archivespace_uninstall() {
+  // Add new variables to clean up.
+  $variables = array(
+    'islandora_archivespace_username',
+    'islandora_archivespace_password',
+    'islandora_archivespace_baseurl',
+    'islandora_archivespace_transform',
+    'islandora_archivespace_self_transform',
+    'islandora_archivespace_enabled_models',
+  );
+  array_walk($variables, 'variable_del');
+}
