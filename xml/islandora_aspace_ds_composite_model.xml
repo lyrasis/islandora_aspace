@@ -1,0 +1,6 @@
+<?xml version="1.0"?>
+<dsCompositeModel xmlns="info:fedora/fedora-system:def/dsCompositeModel#">
+  <dsTypeModel ID="ARCHIVESSPACE">
+    <form MIME="application/json"/>
+  </dsTypeModel>
+</dsCompositeModel>

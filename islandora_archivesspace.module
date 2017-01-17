@@ -1,0 +1,380 @@
+<?php
+
+/**
+ * @file
+ * Defines all the hooks this module implements.
+ */
+
+// Permissions.
+define('ISLANDORA_ARCHIVESSPACE_API', 'archivesspace rest api');
+
+// Content Model
+define('ISLANDORA_ARCHIVESSPACE_OBJECT_CMODEL', 'islandora:archivesspaceCModel');
+
+// DS Name
+define('ISLANDORA_ARCHIVESSPACE_DSID', 'ARCHIVESSPACE');
+
+// Default Mods
+define('ISLANDORA_ARCHIVESSPACE_MODS', <<<MODS
+<?xml version="1.0"?>
+<mods xmlns="http://www.loc.gov/mods/v3" xmlns:mods="http://www.loc.gov/mods/v3" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xlink="http://www.w3.org/1999/xlink">
+  <titleInfo><title>[aspace:title]</title></titleInfo>
+  <subject><topic>[aspace:subjects:0:title]</topic></subject>
+  <subject><topic>[aspace:subjects:1:title]</topic></subject>
+  <subject><topic>[aspace:subjects:2:title]</topic></subject>
+  <subject><topic>[aspace:subjects:3:title]</topic></subject>
+  <subject><topic>[aspace:subjects:4:title]</topic></subject>
+  <subject><topic>[aspace:subjects:5:title]</topic></subject>
+</mods>
+MODS
+);
+
+/**
+ * Implements hook_menu().
+ */
+function islandora_archivesspace_menu() {
+  $items = array();
+  $items['admin/islandora/archivesspace'] = array(
+    'title' => 'Islandora ArchivesSpace',
+    'description' => 'Configure settings for Islandora ArchivesSpace integration.',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('islandora_archivesspace_admin_form'),
+    'file' => 'includes/admin.form.inc',
+    'access arguments' => array('administer site configuration'),
+  );
+
+  return $items;
+}
+
+/**
+ * Implements hook_islandora_ingest_steps()
+ */
+function islandora_archivesspace_islandora_ingest_steps(array $form_state) {
+  $shared_storage = islandora_ingest_form_get_shared_storage($form_state);
+  $intersection = array_intersect($shared_storage['models'], variable_get('islandora_archivesspace_enabled_models', array()));
+  if(count($intersection) > 0) {
+    return array(
+      'islandora_archivesspace_step_enable_form' => array(
+        'type' => 'form',
+        'weight' => -5,
+        'form_id' => 'islandora_archivesspace_step_enable_form',
+        'file' => 'includes/ingest_steps.inc',
+        'module' => 'islandora_archivesspace',
+      ),
+    );
+  }
+}
+
+/**
+ * Implements hook_islandora_ingest_steps_alter().
+ */
+function islandora_archivesspace_islandora_ingest_steps_alter(array &$steps, array &$form_state) {
+  if(!isset($form_state['islandora']['step_storage']['islandora_archivesspace_step_enable_form']['islandora_archivesspace_enable'])){
+    return;
+  }
+
+  $enabled = $form_state['islandora']['step_storage']['islandora_archivesspace_step_enable_form']['islandora_archivesspace_enable'];
+  if($enabled) {
+    // Don't use the normal MODs form.
+    if(isset($steps['xml_form_builder_metadata_step']) && $steps['xml_form_builder_metadata_step']['args'][0]['dsid'] == 'MODS') {
+      unset($steps['xml_form_builder_metadata_step']);
+    }
+
+    // Don't use the normal form association selector.
+    if(isset($steps['xml_form_builder_association_step'])) {
+      unset($steps['xml_form_builder_association_step']);
+    }
+
+    // Do add a basic metadata form for the archivesspace ingest.
+    $steps['islandora_archivesspace_step_metadata_form'] = array(
+      'type' => 'form',
+      'weight' => -4,
+      'form_id' => 'islandora_archivesspace_step_metadata_form',
+      'file' => 'includes/ingest_steps.inc',
+      'module' => 'islandora_archivesspace',
+    );
+  }
+}
+
+/**
+ * Implements hook_islandora_required_objects().
+ */
+function islandora_archivesspace_islandora_required_objects(IslandoraTuque $connection) {
+  $module_path = drupal_get_path('module', 'islandora_archivesspace');
+
+  // Large Image Content Model.
+  $aspace_content_model = $connection->repository->constructObject(ISLANDORA_ARCHIVESSPACE_OBJECT_CMODEL);
+  $aspace_content_model->owner = 'fedoraAdmin';
+  $aspace_content_model->label = 'Islandora ArchivesSpace Content Model';
+  $aspace_content_model->models = 'fedora-system:ContentModel-3.0';
+
+  // DS-COMPOSITE-MODEL Datastream.
+  $datastream = $aspace_content_model->constructDatastream('DS-COMPOSITE-MODEL', 'X');
+  $datastream->label = 'DS-COMPOSITE-MODEL';
+  $datastream->mimetype = 'application/xml';
+  $datastream->setContentFromFile("$module_path/xml/islandora_aspace_ds_composite_model.xml", FALSE);
+  $aspace_content_model->ingestDatastream($datastream);
+
+  return array(
+    'islandora_archivesspace' => array(
+      'title' => 'Islandora ArchivesSpace',
+      'objects' => array(
+        $aspace_content_model,
+      ),
+    ),
+  );
+}
+
+/**
+ * Implements hook_islandora_undeletable_datastreams().
+ */
+function islandora_archivesspace_islandora_undeletable_datastreams(array $models) {
+  if(in_array(ISLANDORA_ARCHIVESSPACE_OBJECT_CMODEL, $models)) {
+    return array(ISLANDORA_ARCHIVESSPACE_DSID, 'MODS');
+  }
+}
+
+/**
+ * Implements hook_form_FORM_ID_alter().
+ */
+function islandora_archivesspace_form_islandora_object_properties_form_alter(&$form, &$form_state, $form_id) {
+  $object = islandora_object_load($form['pid']['#value']);
+  if(in_array(ISLANDORA_ARCHIVESSPACE_OBJECT_CMODEL, $object->models)) {
+    $form['object_state']['#disabled'] = TRUE;
+    $form['object_label']['#disabled'] = TRUE;
+    $form['archivesspace_info'] = array(
+      '#markup' => '<h1>' . t('This item is managed in ArchivesSpace, please manage its properties there.') . '</h1>',
+      '#weight' => -10,
+    );
+  }
+}
+
+/**
+ * Implements hook_hook_theme_registry_alter().
+ */
+function islandora_archivesspace_theme_registry_alter(&$theme_registry) {
+  $path = drupal_get_path('module', 'islandora_archivesspace');
+
+  $theme_registry['islandora_default_edit']['includes'][] = "{$path}/includes/theme.inc";
+  $theme_registry['islandora_default_edit']['preprocess functions'][] = 'islandora_archivesspace_preprocess_islandora_default_edit';
+}
+
+/**
+ * Implements hook_token_info().
+ */
+function islandora_archivesspace_token_info() {
+  $info = array();
+
+  $info['types']['aspace'] = array(
+    'name' => t('Islandora ArchivesSpace'),
+    'description' => t('Tokens for metadata on Islandora ArchivesSpace objects.'),
+    'needs-data' => 'islandora_aspace',
+  );
+
+  // Simple Aspace Tokens
+  $info['tokens']['aspace']['title'] = array(
+    'name' => t('Title'),
+    'description' => t('The objects title.'),
+  );
+  $info['tokens']['aspace']['digital_object_id'] = array(
+    'name' => t('Identifier'),
+    'description' => t('The digital identifier.'),
+  );
+  $info['tokens']['aspace']['publish'] = array(
+    'name' => t('Published'),
+    'description' => t('Is the object published or not.'),
+  );
+  $info['tokens']['aspace']['restrictions'] = array(
+    'name' => t('Restrictions'),
+    'description' => t('Indicates that restrictions apply. The restrictions can be explained using Note subrecords or Rights subrecords.'),
+  );
+  $info['tokens']['aspace']['created_by'] = array(
+    'name' => t('Created By'),
+    'description' => t('Indicates who the record was created by.'),
+  );
+  $info['tokens']['aspace']['last_modified_by'] = array(
+    'name' => t('Last Modified By'),
+    'description' => t('Indicates who the record was last modified by.'),
+  );
+  $info['tokens']['aspace']['create_time'] = array(
+    'name' => t('Create Time'),
+    'description' => t('Indicates when the record was created.'),
+  );
+  $info['tokens']['aspace']['suppressed'] = array(
+    'name' => t('Supressed'),
+    'description' => t('Indicates if this record is supressed in ArchivesSpace.'),
+  );
+  $info['tokens']['aspace']['uri'] = array(
+    'name' => t('Uri'),
+    'description' => t('The URI of this object in the ArchivesSpace API.'),
+  );
+
+  // Dynamic Aspace Tokens
+  $info['tokens']['aspace']['subjects'] = array(
+    'name' => t('Subjects'),
+    'description' => t('Used for linking Subjects with the materials described.'),
+    'dynamic' => TRUE,
+  );
+  $info['tokens']['aspace']['dates'] = array(
+    'name' => t('Dates'),
+    'description' => t('Identifies and records the date(s) that pertain to the creation, assembly, accumulation, and/or maintenance and use of the materials being described.'),
+    'dynamic' => TRUE,
+  );
+  $info['tokens']['aspace']['extents'] = array(
+    'name' => t('Extents'),
+    'description' => t('Indicates the extent and the physical nature of the materials being described.'),
+    'dynamic' => TRUE,
+  );
+  $info['tokens']['aspace']['external_documents'] = array(
+    'name' => t('External Documents'),
+    'description' => t('Links to information in other description or management systems, such as donor files, processing plans, etc.'),
+    'dynamic' => TRUE,
+  );
+  $info['tokens']['aspace']['rights_statements'] = array(
+    'name' => t('Rights Statements'),
+    'description' => t('Information about the rights status of the materials described and whether there are specific restictions or permissions that have been indicated.'),
+    'dynamic' => TRUE,
+  );
+  $info['tokens']['aspace']['linked_agents'] = array(
+    'name' => t('Agent Links'),
+    'description' => t('Associates agents as a creator, source, or subject of the materials described to provide information about their context.'),
+    'dynamic' => TRUE,
+  );
+  $info['tokens']['aspace']['notes'] = array(
+    'name' => t('Notes'),
+    'description' => t('Additional descriptive information about the materials described, usually in the form of text or structured lists.'),
+    'dynamic' => TRUE,
+  );
+  $info['tokens']['aspace']['collection_management'] = array(
+    'name' => t('Collection Management'),
+    'description' => t('Additional, internal-only information about how the materials described will be or have been processed.'),
+    'dynamic' => TRUE,
+  );
+  $info['tokens']['aspace']['user_defined'] = array(
+    'name' => t('User Defined'),
+    'description' => t('User defined fields for recording additional information not captured in other sections of the application.'),
+    'dynamic' => TRUE,
+  );
+
+  return $info;
+}
+
+/**
+ * Implements hook_tokens().
+ */
+function islandora_archivesspace_tokens($type, $tokens, array $data = array(), array $options = array()) {
+  $replacements = array();
+
+  if ($type == 'aspace') {
+    if(!isset($data['islandora_aspace'])) {
+      return;
+    }
+
+    list($object, $aspace_data) = $data['islandora_aspace'];
+
+    // Recursively find the token in the array.
+    $process = function($stack, $original, $data) use(&$process) {
+      $replacements = array();
+      $key = array_pop($stack);
+
+      if(isset($data[$key]) && gettype($data[$key]) === 'string') {
+        $replacements[$original] = $data[$key];
+      }
+      elseif(isset($data[$key]) && gettype($data[$key]) === 'boolean') {
+        $replacements[$original] = $data[$key] ? "true" : "false";
+      }
+      elseif(isset($data[$key]) && gettype($data[$key]) === 'array') {
+        $replacements += $process($stack, $original, $data[$key]);
+      }
+      else {
+        $replacements[$original] = '';
+      }
+      return $replacements;
+    };
+
+    foreach ($tokens as $name => $original) {
+      $exploded = array_reverse(explode(':', $name));
+      $replacements += $process($exploded, $original, $aspace_data);
+    }
+  }
+
+  return $replacements;
+}
+
+/**
+ * Implements hook_services_resources().
+ */
+function islandora_archivesspace_services_resources() {
+  return array(
+    'islandora_archivesspace' => array(
+      'update' => array(
+        'help' => 'Updates an islandora object with assoicated archivesspace data.',
+        'file' => array('type' => 'inc', 'module' => 'islandora_archivesspace', 'name' => 'includes/rest'),
+        'callback' => 'islandora_archivesspace_rest_update',
+        'access callback' => 'islandora_archivesspace_rest_access',
+        'args' => array(
+          array(
+            'name' => 'pid',
+            'type' => 'string',
+            'description' => 'The pid of the object to update',
+            'source' => array('path' => '0'),
+            'optional' => FALSE,
+          ),
+          array(
+            'name' => 'data',
+            'type' => 'struct',
+            'description' => 'The data for the object being updated',
+            'source' => 'data',
+            'optional' => FALSE,
+          ),
+        ),
+      ),
+      'delete' => array(
+        'help' => 'Updates an islandora to delete archivesspace connection.',
+        'file' => array('type' => 'inc', 'module' => 'islandora_archivesspace', 'name' => 'includes/rest'),
+        'callback' => 'islandora_archivesspace_rest_delete',
+        'access callback' => 'islandora_archivesspace_rest_access',
+        'args' => array(
+          array(
+            'name' => 'pid',
+            'type' => 'string',
+            'description' => 'The pid of the object to update',
+            'source' => array('path' => '0'),
+            'optional' => FALSE,
+          ),
+        ),
+      ),
+    ),
+  );
+}
+
+/**
+ * Implements hook_ctools_plugin_api().
+ */
+function islandora_archivesspace_ctools_plugin_api($owner, $api) {
+  if ($owner == 'services' && $api == 'services') {
+    return array(
+      'version' => 3,
+      'file' => 'rest.inc',
+      'path' => drupal_get_path('module', 'islandora_archivesspace') . '/includes',
+    );
+  }
+}
+
+/**
+ * Implements hook_cmodel_pid_islandora_object_alter().
+ */
+function islandora_archivesspace_islandora_archivesspaceCModel_islandora_object_alter(AbstractObject $object, array &$context) {
+  if($context['action'] == 'purge') {
+    $data = json_decode($object['ARCHIVESSPACE'], TRUE);
+    $return = islandora_archivesspace_delete_deposit($data['uri']);
+    if($return->code != 200) {
+      watchdog(
+        'islandora_archivesspace',
+        'Unable to notify ArchivesSpace of delete for PID: @pid. Error code: @code.',
+        array('@pid' => $object->id, '@code' => $return->code),
+        WATCHDOG_ERROR
+      );
+    }
+  }
+}

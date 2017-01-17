@@ -1,0 +1,35 @@
+<?php
+
+/**
+ * @file
+ * This file contains all install related hooks.
+ */
+
+/**
+ * Implements hook_install().
+ */
+function islandora_archivesspace_install() {
+  module_load_include('inc', 'islandora', 'includes/solution_packs');
+  module_load_include('inc', 'islandora_archivesspace', 'includes/utilities');
+
+  islandora_install_solution_pack('islandora_archivesspace');
+  variable_set('islandora_archivesspace_api_key', islandora_archivesspace_generate_token());
+}
+
+/**
+ * Implements hook_uninstall().
+ */
+function islandora_archivesspace_uninstall() {
+  // Add new variables to clean up.
+  $variables = array(
+    'islandora_archivesspace_username',
+    'islandora_archivesspace_password',
+    'islandora_archivesspace_baseurl',
+    'islandora_archivesspace_api_key',
+    'islandora_archivesspace_transform',
+    'islandora_archivesspace_self_transform',
+    'islandora_archivesspace_enabled_models',
+    'islandora_archivesspace_mods_template',
+  );
+  array_walk($variables, 'variable_del');
+}

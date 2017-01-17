@@ -1,9 +1,0 @@
-name = Islandora Archivespace
-description = "Integrate the metadata capibilities of Archivespace with Islandora."
-dependencies[] = islandora
-dependencies[] = islandora_rest
-dependencies[] = xml_form_builder
-package = Islandora Tools
-version = 7.x-dev
-core = 7.x
-php = 5.3

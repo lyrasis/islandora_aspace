@@ -1,13 +1,18 @@
-# Islandora Archivespace
+# Islandora ArchivesSpace
 
 ## Introduction
+
+This module allows metadata on Islandora to be managed in ArchivesSpace by linking Islandora objects to ArchivesSpace objects. This is accomplished by adding a new ArchivesSpace content model to objects that are being linked to ArchivesSpace objects. 
 
 ## Requirements
 
 This module requires the following modules/libraries:
 
 * [Islandora](https://github.com/islandora/islandora)
-* Islandora Rest
+* [Islandora XML Forms](https://github.com/Islandora/islandora_xml_forms)
+* [Drupal Token Module](https://www.drupal.org/project/token)
+* [Drupal Services Module](https://www.drupal.org/project/services)
+* [ArchivesSpace Islandora Plugin](https://github.com/lyrasis/aspace-islandora)
 
 ## Installation
 
@@ -15,7 +20,11 @@ Install as usual, see [this](https://drupal.org/documentation/install/modules-th
 
 ## Configuration
 
+This module has a counterpart plugin for ArchivesSpace that also needs to be configured. 
+
 ## Documentation
+
+For security the REST URLs used to communicate between ArchivesSpace and Islandora should all be HTTPS. This module has been tested with Islandora v7.x-1.8.
 
 ## Troubleshooting/Issues
 
