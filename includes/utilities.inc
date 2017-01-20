@@ -126,3 +126,19 @@ function islandora_archivesspace_generate_token() {
   $token = str_replace('/', 'z', $token);
   return $token;
 }
+
+function islandora_archivesspace_check_identifier($repository_uri, $identifier) {
+  module_load_include('inc', 'islandora_archivesspace', 'includes/archivesspace');
+  $return = islandora_archivesspace_search_repository($repository_uri, "digital_object_id:{$identifier}");
+  if($return->code != 200) {
+    return $return;
+  }
+
+  $data = json_decode($return->data, TRUE);
+  if(isset($data['total_hits']) && $data['total_hits'] == 0) {
+    return FALSE;
+  }
+  else {
+    return TRUE;
+  }
+}

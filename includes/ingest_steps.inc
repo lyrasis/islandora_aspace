@@ -101,18 +101,60 @@ function islandora_archivesspace_step_metadata_form(array $form, array &$form_st
   return $form;
 }
 
+/**
+ * metadata form validate handler
+ */
 function islandora_archivesspace_step_metadata_form_validate(array $form, array &$form_state) {
-  module_load_include('inc', 'islandora_archivesspace', 'includes/archivesspace');
+  module_load_include('inc', 'islandora_archivesspace', 'includes/utilities');
 
   $title = $form_state['values']['islandora_archivesspace_title'];
   $identifier = $form_state['values']['islandora_archivesspace_identifier'];
   $repository = $form_state['values']['islandora_archivesspace_repository'];
 
-  $object = islandora_ingest_form_get_object($form_state);
+  $id = islandora_archivesspace_check_identifier($repository, $identifier);
 
-  $data = islandora_archivesspace_create_deposit($repository, $title, $identifier, $object->id);
-  if ($data->code != 200) {
-    $body = json_decode($data->data);
+  if($id === TRUE || is_object($id)) {
+    if($id === TRUE) {
+      $error_message = "Identifier already exists in ArchivesSpace.";
+      $error_location = "islandora_archivesspace_identifier";
+    }
+    elseif(is_object($id) {
+      $error_message = "ArchivesSpace Error. Code: {$id->code}.";
+      $error_location = "archivesspace_metadata";
+    }
+    form_set_error($error_location, $error_message);
+  }
+}
+
+/**
+ * metadata form submit handler
+ */
+function islandora_archivesspace_step_metadata_form_submit(array $form, array &$form_state) {
+  $storage = &islandora_ingest_form_get_step_storage($form_state);
+  $storage['islandora_archivesspace_title'] = $form_state['values']['islandora_archivesspace_title'];
+  $storage['islandora_archivesspace_identifier'] = $form_state['values']['islandora_archivesspace_identifier'];
+  $storage['islandora_archivesspace_repository'] = $form_state['values']['islandora_archivesspace_repository'];
+}
+
+/**
+ * Callback to create archivesspace object.
+ */
+function islandora_archivesspace_step_object_create_callback($args) {
+  module_load_include('inc', 'islandora_archivesspace', 'includes/utilities');
+  module_load_include('inc', 'islandora_archivesspace', 'includes/archivesspace');
+
+  $form_state = $args[0];
+
+  $object = islandora_ingest_form_get_object($form_state);
+  $storage = &islandora_ingest_form_get_step_storage($form_state, 'islandora_archivesspace_step_metadata_form');
+
+  $title = $storage['islandora_archivesspace_title'];
+  $identifier = $storage['islandora_archivesspace_identifier'];
+  $repository = $storage['islandora_archivesspace_repository'];
+
+  $return = islandora_archivesspace_create_deposit($repository, $title, $identifier, $object->id);
+  if ($return->code != 200) {
+    $body = json_decode($return->data);
     $error_message = '';
 
     if(is_object($body->error)) {
@@ -124,72 +166,23 @@ function islandora_archivesspace_step_metadata_form_validate(array $form, array 
       $error_message = "ArchivesSpace: {$body->error}";
     }
 
-    if(isset($body->error->digital_object_id)) {
-      $error_location = 'islandora_archivesspace_identifier';
-    }
-    else {
-      $error_location = 'archivesspace_metadata';
-    }
-
-    form_set_error($error_location, $error_message);
+    // Unfortunatly we have no way to interrupt the ingest process from there, so
+    // we throw an exception to stop the whole process. **bang**.
+    throw new Exception($error_message, $return->code);
   }
-  else {
-    $storage = &islandora_ingest_form_get_step_storage($form_state);
-    $body = json_decode($data->data);
-    $storage['islandora_archivesspace_object_id'] = $body->id;
-  }
-}
 
-/**
- * Simple metadata form submit handler
- */
-function islandora_archivesspace_step_metadata_form_submit(array $form, array &$form_state) {
-  module_load_include('inc', 'islandora_archivesspace', 'includes/utilities');
-  module_load_include('inc', 'islandora_archivesspace', 'includes/archivesspace');
-
-  $storage = &islandora_ingest_form_get_step_storage($form_state);
-  $storage['islandora_archivesspace_title'] = $form_state['values']['islandora_archivesspace_title'];
-  $storage['islandora_archivesspace_identifier'] = $form_state['values']['islandora_archivesspace_identifier'];
-  $storage['islandora_archivesspace_repository'] = $form_state['values']['islandora_archivesspace_repository'];
-
-  $object = islandora_ingest_form_get_object($form_state);
-  $object->label = $storage['islandora_archivesspace_title'];
+  $body = json_decode($return->data);
+  $aspace_id = $body->id;
+  $object->label = $title;
   $models = $object->models;
   $models[] = ISLANDORA_ARCHIVESSPACE_OBJECT_CMODEL;
   $object->models = $models;
 
-  $repo = $storage['islandora_archivesspace_repository'];
-  $obj_id = $storage['islandora_archivesspace_object_id'];
-  $return = islandora_archivesspace_get_digital_object($repo, $obj_id);
+  $return = islandora_archivesspace_get_digital_object($repository, $aspace_id);
   if ($return->code != 200) {
-    throw new Exception('Unable to retrieve ArchivesSpace object.');
+    throw new Exception('Unable to retrieve freshly created ArchivesSpace object.', $return->code);
   }
 
   $data = json_decode($return->data, TRUE);
   islandora_archivespace_create_datastreams($object, $data);
-  $storage['islandora_archivesspace_created'] = TRUE;
-}
-
-function islandora_archivesspace_step_metadata_form_undo_submit(array $form, array &$form_state) {
-  module_load_include('inc', 'islandora_archivesspace', 'includes/archivesspace');
-
-  $storage = &islandora_ingest_form_get_step_storage($form_state);
-  $object = islandora_ingest_form_get_object($form_state);
-
-  if(isset($storage['islandora_archivesspace_created']) && $storage['islandora_archivesspace_created']) {
-    $storage['islandora_archivesspace_created'] = FALSE;
-    $object->purgeDatastream(ISLANDORA_ARCHIVESSPACE_DSID);
-    $object->purgeDatastream('MODS');
-    $object->purgeDatastream('DC');
-  }
-
-  if(isset($storage['islandora_archivesspace_object_id']) && $storage['islandora_archivesspace_object_id']) {
-    $data = islandora_archivesspace_delete_digital_object($storage['islandora_archivesspace_repository'], $storage['islandora_archivesspace_object_id']);
-    if($data->code != 200) {
-      drupal_set_message('Failed to delete ArchivesSpace Object.', 'error');
-    }
-    else {
-      unset($storage['islandora_archivesspace_object_id']);
-    }
-  }
 }

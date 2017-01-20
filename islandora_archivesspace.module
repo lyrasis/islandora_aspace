@@ -93,6 +93,17 @@ function islandora_archivesspace_islandora_ingest_steps_alter(array &$steps, arr
       'file' => 'includes/ingest_steps.inc',
       'module' => 'islandora_archivesspace',
     );
+
+    // Do add the callback to create the archivesspace object.
+    $steps['islandora_archivesspace_step_object_create_callback'] = array(
+      'type' => 'callback',
+      'weight' => 50,
+      'do_function' => array(
+        'function' => 'islandora_archivesspace_step_object_create_callback',
+      ),
+      'file' => 'includes/ingest_steps.inc',
+      'module' => 'islandora_archivesspace',
+    );
   }
 }
 
