@@ -103,7 +103,7 @@ function islandora_archivesspace_create_datastreams($object, $data) {
   }
 
   $dc_transform = variable_get('islandora_archivesspace_transform', 'No Transform');
-  if ($transform != 'No Transform') {
+  if ($dc_transform != 'No Transform') {
     $dc_xml = islandora_archivesspace_transform_document($mods_xml, $dc_transform);
     if(!isset($object['DC'])) {
       $dc_ds = $object->constructDatastream('DC', 'X');
