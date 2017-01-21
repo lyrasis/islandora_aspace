@@ -74,18 +74,16 @@ function islandora_archivesspace_rest_delete($pid) {
 }
 
 function islandora_archivesspace_rest_access() {
-  $headers = getallheaders();
-  $key = variable_get('islandora_archivesspace_api_key');
+  if(!isset($_SERVER['HTTP_X_ISLANDORA_ASPACE_APIKEY'])) {
+    return FALSE;
+  }
 
+  $key = variable_get('islandora_archivesspace_api_key');
   if(empty($key)) {
     return FALSE;
   }
 
-  if(!isset($headers['X-Islandora-ASpace-ApiKey'])) {
-    return FALSE;
-  }
-
-  if($headers['X-Islandora-ASpace-ApiKey'] === $key) {
+  if($_SERVER['HTTP_X_ISLANDORA_ASPACE_APIKEY'] === $key) {
     return TRUE;
   }
   else {
