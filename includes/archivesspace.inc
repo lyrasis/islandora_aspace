@@ -118,7 +118,6 @@ function islandora_archivesspace_create_deposit($repository_uri, $title, $identi
 
   // Request to create new object.
   $json = Array();
-  $json['pid'] = $pid;
   $json['title'] = $title;
   $json['digital_object_id'] = $identifier;
   $json['file_versions'] = array(
@@ -128,7 +127,7 @@ function islandora_archivesspace_create_deposit($repository_uri, $title, $identi
   );
 
   $url = variable_get('islandora_archivesspace_baseurl');
-  $url .= '/plugins/aspace_islandora' . $repository_uri . '/islandora_deposits';
+  $url .= '/plugins/aspace_islandora' . $repository_uri . '/islandora_deposits?pid=' . urlencode($pid);
 
   return drupal_http_request($url,
     array(
@@ -146,7 +145,7 @@ function islandora_archivesspace_delete_deposit($object_uri) {
   }
 
   $url = variable_get('islandora_archivesspace_baseurl');
-  $url .= '/plugins/aspace_islandora' . $repository_uri . '/islandora_deposits/' . $id;
+  $url .= '/plugins/aspace_islandora' . $object_uri . '/islandora_deposits/' . $id;
 
   return drupal_http_request($url,
     array(

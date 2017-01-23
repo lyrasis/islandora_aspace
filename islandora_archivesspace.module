@@ -376,8 +376,9 @@ function islandora_archivesspace_ctools_plugin_api($owner, $api) {
  * Implements hook_cmodel_pid_islandora_object_alter().
  */
 function islandora_archivesspace_islandora_archivesspaceCModel_islandora_object_alter(AbstractObject $object, array &$context) {
+  module_load_include('inc', 'islandora_archivesspace', 'includes/archivesspace');
   if($context['action'] == 'purge') {
-    $data = json_decode($object['ARCHIVESSPACE'], TRUE);
+    $data = json_decode($object['ARCHIVESSPACE']->content, TRUE);
     $return = islandora_archivesspace_delete_deposit($data['uri']);
     if($return->code != 200) {
       watchdog(

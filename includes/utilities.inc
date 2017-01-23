@@ -30,16 +30,18 @@ function islandora_archivesspace_preprocess_aspace_data($data) {
 
   $resolveref = function(&$array) use(&$resolveref) {
     foreach($array as $key => $item) {
-      if($key === 'ref'){
-        $return = islandora_archivesspace_get_ref($item);
-        if($return->code == 200) {
-          $ref_data = json_decode($return->data, TRUE);
-          $resolveref($ref_data);
-          $array = array_merge($array,$ref_data);
-        }
-      }
-      elseif(is_array($item)) {
+      if(is_array($item)) {
         $resolveref($array[$key]);
+      }
+    }
+    if(isset($array['ref'])) {
+      $item = $array['ref'];
+      unset($array['ref']);
+      $return = islandora_archivesspace_get_ref($item);
+      dd($return);
+      if($return->code == 200) {
+        $ref_data = json_decode($return->data, TRUE);
+        $array = array_merge($array,$ref_data);
       }
     }
   };
@@ -65,6 +67,7 @@ function islandora_archivesspace_preprocess_aspace_data($data) {
     'external_ids',
     'linked_events',
     'linked_instances',
+    '_resolved',
   );
   $resolveref($data);
   $filter($data, $keys);

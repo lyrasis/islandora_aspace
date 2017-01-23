@@ -185,7 +185,7 @@ function islandora_archivesspace_step_object_create_callback(array &$form_state)
   }
 
   $data = json_decode($return->data, TRUE);
-  islandora_archivespace_create_datastreams($object, $data);
+  islandora_archivesspace_create_datastreams($object, $data);
 }
 
 function islandora_archivesspace_step_fom_set_error(array &$form_state, $message) {
