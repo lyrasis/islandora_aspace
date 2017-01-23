@@ -118,8 +118,8 @@ function islandora_archivesspace_step_metadata_form_validate(array $form, array 
       $error_message = "Identifier already exists in ArchivesSpace.";
       $error_location = "islandora_archivesspace_identifier";
     }
-    elseif(is_object($id) {
-      $error_message = "ArchivesSpace Error. Code: {$id->code}.";
+    elseif(is_object($id)) {
+      $error_message = "ArchivesSpace Error. Code: {$id->code}. Message: {$id->error}.";
       $error_location = "archivesspace_metadata";
     }
     form_set_error($error_location, $error_message);
@@ -139,11 +139,9 @@ function islandora_archivesspace_step_metadata_form_submit(array $form, array &$
 /**
  * Callback to create archivesspace object.
  */
-function islandora_archivesspace_step_object_create_callback($args) {
+function islandora_archivesspace_step_object_create_callback(array &$form_state) {
   module_load_include('inc', 'islandora_archivesspace', 'includes/utilities');
   module_load_include('inc', 'islandora_archivesspace', 'includes/archivesspace');
-
-  $form_state = $args[0];
 
   $object = islandora_ingest_form_get_object($form_state);
   $storage = &islandora_ingest_form_get_step_storage($form_state, 'islandora_archivesspace_step_metadata_form');
@@ -157,18 +155,21 @@ function islandora_archivesspace_step_object_create_callback($args) {
     $body = json_decode($return->data);
     $error_message = '';
 
-    if(is_object($body->error)) {
-      foreach($body->error as $key => $value) {
-        $error_message .= "$key: {$value[0]} ";
+    if(isset($body->error)) {
+      if(is_object($body->error)) {
+        foreach($body->error as $key => $value) {
+          $error_message .= "$key: {$value[0]} ";
+        }
+      }
+      else {
+        $error_message = "ArchivesSpace: {$body->error}";
       }
     }
     else {
-      $error_message = "ArchivesSpace: {$body->error}";
+      $error_message = "ArchivesSpace: {$return->code}: {$return->error}";
     }
 
-    // Unfortunatly we have no way to interrupt the ingest process from there, so
-    // we throw an exception to stop the whole process. **bang**.
-    throw new Exception($error_message, $return->code);
+    return islandora_archivesspace_step_fom_set_error($form_state, $error_message);
   }
 
   $body = json_decode($return->data);
@@ -180,9 +181,18 @@ function islandora_archivesspace_step_object_create_callback($args) {
 
   $return = islandora_archivesspace_get_digital_object($repository, $aspace_id);
   if ($return->code != 200) {
-    throw new Exception('Unable to retrieve freshly created ArchivesSpace object.', $return->code);
+    return islandora_archivesspace_step_fom_set_error($form_state, 'Unable to retrieve freshly created ArchivesSpace object. Code: {$return->code}');
   }
 
   $data = json_decode($return->data, TRUE);
   islandora_archivespace_create_datastreams($object, $data);
+}
+
+function islandora_archivesspace_step_fom_set_error(array &$form_state, $message) {
+  $form_state['submit_handlers'] = NULL;
+  $form_state['validate_handlers'] = NULL;
+  $form_state['islandora']['objects'] = array();
+  $form_state['islandora']['shared_storage']['objects'] = array();
+  drupal_static_reset('islandora_ingest_form_get_steps');
+  drupal_set_message("Ingest Failed.\n $message.\n Please contact your system administrator.", 'error');
 }
