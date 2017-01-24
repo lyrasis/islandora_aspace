@@ -30,16 +30,24 @@ function islandora_archivesspace_preprocess_aspace_data($data) {
 
   $resolveref = function(&$array) use(&$resolveref) {
     foreach($array as $key => $item) {
-      if($key === 'ref'){
-        $return = islandora_archivesspace_get_ref($item);
-        if($return->code == 200) {
-          $ref_data = json_decode($return->data, TRUE);
-          $resolveref($ref_data);
-          $array = array_merge($array,$ref_data);
-        }
-      }
-      elseif(is_array($item)) {
+      if(is_array($item)) {
         $resolveref($array[$key]);
+      }
+    }
+    if(isset($array['_resolved'])) {
+      $item = $array['_resolved'];
+      unset($array['_resolved']);
+      unset($array['ref']);
+      unset($item['ref']);
+      $array = array_merge($array, $item);
+    }
+    elseif(isset($array['ref'])) {
+      $item = $array['ref'];
+      unset($array['ref']);
+      $return = islandora_archivesspace_get_ref($item);
+      if($return->code == 200) {
+        $ref_data = json_decode($return->data, TRUE);
+        $array = array_merge($array,$ref_data);
       }
     }
   };
@@ -74,6 +82,7 @@ function islandora_archivesspace_preprocess_aspace_data($data) {
 function islandora_archivesspace_create_datastreams($object, $data) {
   $data = islandora_archivesspace_preprocess_aspace_data($data);
   $json_data = json_encode($data);
+  $json_data = islandora_archivesspace_jsonpp($json_data);
 
   if(!isset($object[ISLANDORA_ARCHIVESSPACE_DSID])) {
     $aspace_ds = $object->constructDatastream(ISLANDORA_ARCHIVESSPACE_DSID, 'M');
@@ -125,4 +134,59 @@ function islandora_archivesspace_generate_token() {
   $token = str_replace('+', 'A', $token);
   $token = str_replace('/', 'z', $token);
   return $token;
+}
+
+function islandora_archivesspace_check_identifier($repository_uri, $identifier) {
+  module_load_include('inc', 'islandora_archivesspace', 'includes/archivesspace');
+  $return = islandora_archivesspace_search_repository($repository_uri, "digital_object_id:{$identifier}");
+  if($return->code != 200) {
+    return $return;
+  }
+
+  $data = json_decode($return->data, TRUE);
+  if(isset($data['total_hits']) && $data['total_hits'] == 0) {
+    return FALSE;
+  }
+  else {
+    return TRUE;
+  }
+}
+
+/**
+ * jsonpp - Pretty print JSON data
+ *
+ * In versions of PHP < 5.4.x, the json_encode() function does not yet provide a
+ * pretty-print option. In lieu of forgoing the feature, an additional call can
+ * be made to this function, passing in JSON text, and (optionally) a string to
+ * be used for indentation.
+ *
+ * This can be removed and replaced with the native PHP call once Islandora stops
+ * supporting PHP 5.3.3.
+ *
+ * @param string $json  The JSON data, pre-encoded
+ * @param string $istr  The indentation string
+ *
+ * @link https://github.com/ryanuber/projects/blob/master/PHP/JSON/jsonpp.php
+ *
+ * @return string
+ */
+function islandora_archivesspace_jsonpp($json, $istr='  ')
+{
+    $result = '';
+    for($p=$q=$i=0; isset($json[$p]); $p++)
+    {
+        $json[$p] == '"' && ($p>0?$json[$p-1]:'') != '\\' && $q=!$q;
+        if(!$q && strchr(" \t\n\r", $json[$p])){continue;}
+        if(strchr('}]', $json[$p]) && !$q && $i--)
+        {
+            strchr('{[', $json[$p-1]) || $result .= "\n".str_repeat($istr, $i);
+        }
+        $result .= $json[$p];
+        if(strchr(',{[', $json[$p]) && !$q)
+        {
+            $i += strchr('{[', $json[$p])===FALSE?0:1;
+            strchr('}]', $json[$p+1]) || $result .= "\n".str_repeat($istr, $i);
+        }
+    }
+    return $result;
 }

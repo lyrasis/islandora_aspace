@@ -14,19 +14,25 @@ function islandora_archivesspace_get_repositories() {
   return json_decode($data->data);
 }
 
-function islandora_archivesspace_authenticate() {
-  $username = variable_get('islandora_archivesspace_username');
-  $password = variable_get('islandora_archivesspace_password');
-  $url = variable_get('islandora_archivesspace_baseurl') . '/users/' . urlencode($username) . '/login?password=' . urlencode($password);
-  $data = drupal_http_request($url, array('method' => 'POST'));
+function islandora_archivesspace_authenticate($force = FALSE) {
+  STATIC $session = array(FALSE, NULL);
 
-  if($data->code == 200) {
-    $json = json_decode($data->data);
-    return array(TRUE, $json->session);
+  if(!$session[0] || $force) {
+    $username = variable_get('islandora_archivesspace_username');
+    $password = variable_get('islandora_archivesspace_password');
+    $url = variable_get('islandora_archivesspace_baseurl') . '/users/' . urlencode($username) . '/login?password=' . urlencode($password);
+    $data = drupal_http_request($url, array('method' => 'POST'));
+
+    if($data->code == 200) {
+      $json = json_decode($data->data);
+      $session = array(TRUE, $json->session);
+    }
+    else {
+      $session = array(FALSE, $data);
+    }
   }
-  else {
-    return array(FALSE, $data);
-  }
+
+  return $session;
 }
 
 function islandora_archivesspace_create_digital_object($repository_uri, $title, $identifier, $pid) {
@@ -112,7 +118,6 @@ function islandora_archivesspace_create_deposit($repository_uri, $title, $identi
 
   // Request to create new object.
   $json = Array();
-  $json['pid'] = $pid;
   $json['title'] = $title;
   $json['digital_object_id'] = $identifier;
   $json['file_versions'] = array(
@@ -122,7 +127,7 @@ function islandora_archivesspace_create_deposit($repository_uri, $title, $identi
   );
 
   $url = variable_get('islandora_archivesspace_baseurl');
-  $url .= '/plugins/aspace_islandora' . $repository_uri . '/islandora_deposits';
+  $url .= '/plugins/aspace_islandora' . $repository_uri . '/islandora_deposits?pid=' . urlencode($pid);
 
   return drupal_http_request($url,
     array(
@@ -139,12 +144,28 @@ function islandora_archivesspace_delete_deposit($object_uri) {
     return $session_key;
   }
 
+  $parts = explode('/', $object_uri);
   $url = variable_get('islandora_archivesspace_baseurl');
-  $url .= '/plugins/aspace_islandora' . $repository_uri . '/islandora_deposits/' . $id;
+  $url .= "/plugins/aspace_islandora/repositories/{$parts[2]}/islandora_deposits/{$parts[4]}";
 
   return drupal_http_request($url,
     array(
       'method' => 'DELETE',
+      'headers' => array('X-ArchivesSpace-Session' => $session_key),
+    )
+  );
+}
+
+function islandora_archivesspace_search_repository($repository_uri, $q, $page = 1) {
+  list($success, $session_key) = islandora_archivesspace_authenticate();
+  if(!$success) {
+    return $session_key;
+  }
+
+  $url = variable_get('islandora_archivesspace_baseurl') . "{$repository_uri}/search?page={$page}&q=" . urlencode($q);
+  return drupal_http_request($url,
+    array(
+      'method' => 'GET',
       'headers' => array('X-ArchivesSpace-Session' => $session_key),
     )
   );

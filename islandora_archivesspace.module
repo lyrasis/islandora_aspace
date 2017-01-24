@@ -93,6 +93,17 @@ function islandora_archivesspace_islandora_ingest_steps_alter(array &$steps, arr
       'file' => 'includes/ingest_steps.inc',
       'module' => 'islandora_archivesspace',
     );
+
+    // Do add the callback to create the archivesspace object.
+    $steps['islandora_archivesspace_step_object_create_callback'] = array(
+      'type' => 'callback',
+      'weight' => 50,
+      'do_function' => array(
+        'function' => 'islandora_archivesspace_step_object_create_callback',
+      ),
+      'file' => 'includes/ingest_steps.inc',
+      'module' => 'islandora_archivesspace',
+    );
   }
 }
 
@@ -365,16 +376,18 @@ function islandora_archivesspace_ctools_plugin_api($owner, $api) {
  * Implements hook_cmodel_pid_islandora_object_alter().
  */
 function islandora_archivesspace_islandora_archivesspaceCModel_islandora_object_alter(AbstractObject $object, array &$context) {
+  module_load_include('inc', 'islandora_archivesspace', 'includes/archivesspace');
   if($context['action'] == 'purge') {
-    $data = json_decode($object['ARCHIVESSPACE'], TRUE);
+    $data = json_decode($object['ARCHIVESSPACE']->content, TRUE);
     $return = islandora_archivesspace_delete_deposit($data['uri']);
     if($return->code != 200) {
       watchdog(
         'islandora_archivesspace',
-        'Unable to notify ArchivesSpace of delete for PID: @pid. Error code: @code.',
-        array('@pid' => $object->id, '@code' => $return->code),
+        'Unable to notify ArchivesSpace of delete for PID: @pid. Error code: @code. Data: @body.',
+        array('@pid' => $object->id, '@code' => $return->code, '@body' => $return->data),
         WATCHDOG_ERROR
       );
+      drupal_set_message('Error notifying ArchivesSpace of delete.', 'error');
     }
   }
 }
