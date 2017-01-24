@@ -151,18 +151,18 @@ function islandora_archivesspace_step_object_create_callback(array &$form_state)
   $repository = $storage['islandora_archivesspace_repository'];
 
   $return = islandora_archivesspace_create_deposit($repository, $title, $identifier, $object->id);
+  $body = json_decode($return->data, TRUE);
   if ($return->code != 200) {
-    $body = json_decode($return->data);
     $error_message = '';
 
-    if(isset($body->error)) {
-      if(is_object($body->error)) {
-        foreach($body->error as $key => $value) {
+    if(isset($body['error'])) {
+      if(is_array($body['error'])) {
+        foreach($body['error'] as $key => $value) {
           $error_message .= "$key: {$value[0]} ";
         }
       }
       else {
-        $error_message = "ArchivesSpace: {$body->error}";
+        $error_message = "ArchivesSpace: {$body['error']}";
       }
     }
     else {
@@ -172,20 +172,11 @@ function islandora_archivesspace_step_object_create_callback(array &$form_state)
     return islandora_archivesspace_step_fom_set_error($form_state, $error_message);
   }
 
-  $body = json_decode($return->data);
-  $aspace_id = $body->id;
   $object->label = $title;
   $models = $object->models;
   $models[] = ISLANDORA_ARCHIVESSPACE_OBJECT_CMODEL;
   $object->models = $models;
-
-  $return = islandora_archivesspace_get_digital_object($repository, $aspace_id);
-  if ($return->code != 200) {
-    return islandora_archivesspace_step_fom_set_error($form_state, 'Unable to retrieve freshly created ArchivesSpace object. Code: {$return->code}');
-  }
-
-  $data = json_decode($return->data, TRUE);
-  islandora_archivesspace_create_datastreams($object, $data);
+  islandora_archivesspace_create_datastreams($object, $body);
 }
 
 function islandora_archivesspace_step_fom_set_error(array &$form_state, $message) {

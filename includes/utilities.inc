@@ -29,25 +29,14 @@ function islandora_archivesspace_preprocess_aspace_data($data) {
   module_load_include('inc', 'islandora_archivesspace', 'includes/archivesspace');
 
   $resolveref = function(&$array) use(&$resolveref) {
-    foreach($array as $key => $item) {
-      if(is_array($item)) {
-        $resolveref($array[$key]);
-      }
-    }
     if(isset($array['_resolved'])) {
       $item = $array['_resolved'];
       unset($array['_resolved']);
-      unset($array['ref']);
-      unset($item['ref']);
       $array = array_merge($array, $item);
     }
-    elseif(isset($array['ref'])) {
-      $item = $array['ref'];
-      unset($array['ref']);
-      $return = islandora_archivesspace_get_ref($item);
-      if($return->code == 200) {
-        $ref_data = json_decode($return->data, TRUE);
-        $array = array_merge($array,$ref_data);
+    foreach($array as $key => $item) {
+      if(is_array($item)) {
+        $resolveref($array[$key]);
       }
     }
   };
@@ -70,9 +59,6 @@ function islandora_archivesspace_preprocess_aspace_data($data) {
     'system_mtime',
     'user_mtime',
     'jsonmodel_type',
-    'external_ids',
-    'linked_events',
-    'linked_instances',
   );
   $resolveref($data);
   $filter($data, $keys);
