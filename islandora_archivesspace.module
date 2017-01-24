@@ -383,10 +383,11 @@ function islandora_archivesspace_islandora_archivesspaceCModel_islandora_object_
     if($return->code != 200) {
       watchdog(
         'islandora_archivesspace',
-        'Unable to notify ArchivesSpace of delete for PID: @pid. Error code: @code.',
-        array('@pid' => $object->id, '@code' => $return->code),
+        'Unable to notify ArchivesSpace of delete for PID: @pid. Error code: @code. Data: @body.',
+        array('@pid' => $object->id, '@code' => $return->code, '@body' => $return->data),
         WATCHDOG_ERROR
       );
+      drupal_set_message('Error notifying ArchivesSpace of delete.', 'error');
     }
   }
 }

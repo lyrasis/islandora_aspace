@@ -144,8 +144,9 @@ function islandora_archivesspace_delete_deposit($object_uri) {
     return $session_key;
   }
 
+  $parts = explode('/', $object_uri);
   $url = variable_get('islandora_archivesspace_baseurl');
-  $url .= '/plugins/aspace_islandora' . $object_uri . '/islandora_deposits/' . $id;
+  $url .= "/plugins/aspace_islandora/repositories/{$parts[2]}/islandora_deposits/{$parts[4]}";
 
   return drupal_http_request($url,
     array(
