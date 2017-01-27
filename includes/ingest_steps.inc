@@ -74,6 +74,12 @@ function islandora_archivesspace_step_metadata_form(array $form, array &$form_st
     '#required' => TRUE,
   );
 
+  $form['archivesspace_metadata']['islandora_archivesspace_published'] = array(
+    '#type' => 'checkbox',
+    '#title' => t('Publish'),
+    '#description' => 'Should the item be published on ingest?',
+  );
+
   $form['islandora_archivesspace_repository'] = array(
     '#type' => 'select',
     '#title' => t('Select Repository'),
@@ -82,20 +88,23 @@ function islandora_archivesspace_step_metadata_form(array $form, array &$form_st
     '#required' => TRUE,
   );
 
-  if(isset($form_state['islandora']['step_storage']['islandora_archivesspace_step_metadata_form'])) {
-    $storage = $form_state['islandora']['step_storage']['islandora_archivesspace_step_metadata_form'];
+  $storage = &islandora_ingest_form_get_step_storage($form_state);
+  $metadata = &$form['archivesspace_metadata'];
 
-    if(isset($storage['islandora_archivesspace_title'])) {
-      $form['archivesspace_metadata']['islandora_archivesspace_title']['#default_value'] = $storage['islandora_archivesspace_title'];
-    }
+  if(isset($storage['islandora_archivesspace_title'])) {
+    $metadata['islandora_archivesspace_title']['#default_value'] = $storage['islandora_archivesspace_title'];
+  }
 
-    if(isset($storage['islandora_archivesspace_identifier'])) {
-      $form['archivesspace_metadata']['islandora_archivesspace_identifier']['#default_value'] = $storage['islandora_archivesspace_identifier'];
-    }
+  if(isset($storage['islandora_archivesspace_identifier'])) {
+    $metadata['islandora_archivesspace_identifier']['#default_value'] = $storage['islandora_archivesspace_identifier'];
+  }
 
-    if(isset($storage['islandora_archivesspace_repository'])) {
-      $form['islandora_archivesspace_repository']['#default_value'] = $storage['islandora_archivesspace_repository'];
-    }
+  if(isset($storage['islandora_archivesspace_published'])) {
+    $metadata['islandora_archivesspace_published']['#default_value'] = $storage['islandora_archivesspace_published'];
+  }
+
+  if(isset($storage['islandora_archivesspace_repository'])) {
+    $form['islandora_archivesspace_repository']['#default_value'] = $storage['islandora_archivesspace_repository'];
   }
 
   return $form;
@@ -134,6 +143,7 @@ function islandora_archivesspace_step_metadata_form_submit(array $form, array &$
   $storage['islandora_archivesspace_title'] = $form_state['values']['islandora_archivesspace_title'];
   $storage['islandora_archivesspace_identifier'] = $form_state['values']['islandora_archivesspace_identifier'];
   $storage['islandora_archivesspace_repository'] = $form_state['values']['islandora_archivesspace_repository'];
+  $storage['islandora_archivesspace_published'] = $form_state['values']['islandora_archivesspace_published'];
 }
 
 /**
@@ -149,8 +159,9 @@ function islandora_archivesspace_step_object_create_callback(array &$form_state)
   $title = $storage['islandora_archivesspace_title'];
   $identifier = $storage['islandora_archivesspace_identifier'];
   $repository = $storage['islandora_archivesspace_repository'];
+  $published = $storage['islandora_archivesspace_published'];
 
-  $return = islandora_archivesspace_create_deposit($repository, $title, $identifier, $object->id);
+  $return = islandora_archivesspace_create_deposit($repository, $title, $identifier, $published, $object->id);
   $body = json_decode($return->data, TRUE);
   if ($return->code != 200) {
     $error_message = '';
@@ -173,6 +184,7 @@ function islandora_archivesspace_step_object_create_callback(array &$form_state)
   }
 
   $object->label = $title;
+  $object->state = $published ? 'A' : 'I';
   $models = $object->models;
   $models[] = ISLANDORA_ARCHIVESSPACE_OBJECT_CMODEL;
   $object->models = $models;
