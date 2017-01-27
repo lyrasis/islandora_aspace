@@ -108,7 +108,7 @@ function islandora_archivesspace_get_ref($uri) {
   );
 }
 
-function islandora_archivesspace_create_deposit($repository_uri, $title, $identifier, $pid) {
+function islandora_archivesspace_create_deposit($repository_uri, $title, $identifier, $published, $pid) {
   list($success, $session_key) = islandora_archivesspace_authenticate();
   if(!$success) {
     return $session_key;
@@ -120,6 +120,7 @@ function islandora_archivesspace_create_deposit($repository_uri, $title, $identi
   $json = Array();
   $json['title'] = $title;
   $json['digital_object_id'] = $identifier;
+  $json['publish'] = $published ? TRUE : FALSE;
   $json['file_versions'] = array(
     array(
       'file_uri' => $islandora_uri,
