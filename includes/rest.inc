@@ -1,13 +1,15 @@
 <?php
 
-function islandora_archivesspace_rest_update($pid, $data) {
+function islandora_archivesspace_get_uri($data) {
+  $uri = isset($data['file_versions'][0]['file_uri']) ? $data['file_versions'][0]['file_uri'] : '';
+  $uri = explode('/',$uri);
+  return $uri[count($uri)-1];
+}
+
+function islandora_archivesspace_rest_create_update($pid, $data, $type) {
   module_load_include('inc', 'islandora_archivesspace', 'includes/utilities');
 
-  $uri = $data['file_versions'][0]['file_uri'];
-  $uri = explode('/',$uri);
-  $uri_pid = $uri[count($uri)-1];
-
-  if($uri_pid != $pid) {
+  if(islandora_archivesspace_get_uri($data) != $pid) {
     return services_error("PID and URI mismatch.", 412);
   }
 
@@ -24,19 +26,21 @@ function islandora_archivesspace_rest_update($pid, $data) {
     return services_error('Missing publish.', 406);
   }
 
-  $title = $data['title'];
-  $published = $data['publish'];
+  if(!in_array(ISLANDORA_ARCHIVESSPACE_OBJECT_CMODEL, $object->models)){
+    if($type == 'update') {
+      return services_error('Object is not linked to ArchivesSpace.', 406);
+    }
+    elseif($type == 'create') {
+      $models = $object->models;
+      $models[] = ISLANDORA_ARCHIVESSPACE_OBJECT_CMODEL;
+      $object->models = $models;
+    }
+  }
 
-  $object->label = $title;
-  $object->state = $published ? 'A' : 'I';
+  $object->label = $data['title'];
+  $object->state = $data['publish'] ? 'A' : 'I';
 
   islandora_archivesspace_create_datastreams($object, $data);
-
-  if(!in_array(ISLANDORA_ARCHIVESSPACE_OBJECT_CMODEL, $object->models)){
-    $models = $object->models;
-    $models[] = ISLANDORA_ARCHIVESSPACE_OBJECT_CMODEL;
-    $object->models = $models;
-  }
 
   $islandora_uri = $GLOBALS['base_url'] . '/islandora/object/' . $pid;
 
@@ -44,6 +48,14 @@ function islandora_archivesspace_rest_update($pid, $data) {
     'uri' => $islandora_uri,
     'pid' => $pid,
   );
+}
+
+function islandora_archivesspace_rest_update($pid, $data) {
+  return islandora_archivesspace_rest_create_update($pid, $data, 'update');
+}
+
+function islandora_archivesspace_rest_create($pid, $data) {
+  return islandora_archivesspace_rest_create_update($pid, $data, 'create');
 }
 
 function islandora_archivesspace_rest_delete($pid) {
@@ -62,14 +74,30 @@ function islandora_archivesspace_rest_delete($pid) {
   unset($models[$key]);
   $object->models = $models;
 
-  // Remove the ASpace JSON
-  unset($object[ISLANDORA_ARCHIVESSPACE_DSID]);
+  $islandora_uri = $GLOBALS['base_url'] . '/islandora/object/' . $pid;
+
+  return array(
+    'uri' => $islandora_uri,
+    'pid' => $pid,
+  );
+}
+
+function islandora_archivesspace_rest_retrieve($pid) {
+  $object = islandora_object_load($pid);
+  if(!$object) {
+    return services_error("Unable to load object $pid.", 404);
+  }
+
+  $aspace = in_array(ISLANDORA_ARCHIVESSPACE_OBJECT_CMODEL, $object->models);
 
   $islandora_uri = $GLOBALS['base_url'] . '/islandora/object/' . $pid;
 
   return array(
     'uri' => $islandora_uri,
     'pid' => $pid,
+    'title' => $object->label,
+    'linked' => (bool)$aspace,
+    'data' => $aspace ? json_decode($object[ISLANDORA_ARCHIVESSPACE_DSID]->content, TRUE) : NULL,
   );
 }
 
@@ -126,6 +154,14 @@ function islandora_archivesspace_default_services_endpoint() {
     'islandora_archivesspace' => array(
       'alias' => 'object',
       'operations' => array(
+        'create' => array(
+          'enabled' => '1',
+          'settings' => array(),
+        ),
+        'retrieve' => array(
+          'enabled' => '1',
+          'settings' => array(),
+        ),
         'update' => array(
           'enabled' => '1',
           'settings' => array(),

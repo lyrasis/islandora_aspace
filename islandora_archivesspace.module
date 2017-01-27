@@ -318,8 +318,30 @@ function islandora_archivesspace_tokens($type, $tokens, array $data = array(), a
 function islandora_archivesspace_services_resources() {
   return array(
     'islandora_archivesspace' => array(
+      'create' => array(
+        'help' => 'Creates the link from and Islandora object to ArchivesSpace object.',
+        'file' => array('type' => 'inc', 'module' => 'islandora_archivesspace', 'name' => 'includes/rest'),
+        'callback' => 'islandora_archivesspace_rest_create',
+        'access callback' => 'islandora_archivesspace_rest_access',
+        'args' => array(
+          array(
+            'name' => 'pid',
+            'type' => 'string',
+            'description' => 'The pid of the object to update',
+            'source' => array('path' => '0'),
+            'optional' => FALSE,
+          ),
+          array(
+            'name' => 'data',
+            'type' => 'struct',
+            'description' => 'The data for the object being updated',
+            'source' => 'data',
+            'optional' => FALSE,
+          ),
+        ),
+      ),
       'update' => array(
-        'help' => 'Updates an islandora object with assoicated archivesspace data.',
+        'help' => 'Updates an Islandora object with assoicated ArchivesSpace data.',
         'file' => array('type' => 'inc', 'module' => 'islandora_archivesspace', 'name' => 'includes/rest'),
         'callback' => 'islandora_archivesspace_rest_update',
         'access callback' => 'islandora_archivesspace_rest_access',
@@ -336,6 +358,21 @@ function islandora_archivesspace_services_resources() {
             'type' => 'struct',
             'description' => 'The data for the object being updated',
             'source' => 'data',
+            'optional' => FALSE,
+          ),
+        ),
+      ),
+      'retrieve' => array(
+        'help' => 'Retreieves information about an Islandora objects ArchivesSpace connection.',
+        'file' => array('type' => 'inc', 'module' => 'islandora_archivesspace', 'name' => 'includes/rest'),
+        'callback' => 'islandora_archivesspace_rest_retrieve',
+        'access callback' => 'islandora_archivesspace_rest_access',
+        'args' => array(
+          array(
+            'name' => 'pid',
+            'type' => 'string',
+            'description' => 'The pid of the object to update',
+            'source' => array('path' => '0'),
             'optional' => FALSE,
           ),
         ),
