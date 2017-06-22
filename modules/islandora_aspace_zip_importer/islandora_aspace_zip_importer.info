@@ -1,0 +1,8 @@
+name = Islandora ASpace Zip File Importer
+description = Importer plugin for Zip files, with selectable content models.
+package = Islandora Tools
+dependencies[] = zip_importer
+dependencies[] = islandora_archivesspace
+version = 7.x-dev
+files[] = includes/importer.inc
+core = 7.x
