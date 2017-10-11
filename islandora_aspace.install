@@ -1,0 +1,35 @@
+<?php
+
+/**
+ * @file
+ * This file contains all install related hooks.
+ */
+
+/**
+ * Implements hook_install().
+ */
+function islandora_aspace_install() {
+  module_load_include('inc', 'islandora', 'includes/solution_packs');
+  module_load_include('inc', 'islandora_aspace', 'includes/utilities');
+
+  islandora_install_solution_pack('islandora_aspace');
+  variable_set('islandora_aspace_api_key', islandora_aspace_generate_token());
+}
+
+/**
+ * Implements hook_uninstall().
+ */
+function islandora_aspace_uninstall() {
+  // Add new variables to clean up.
+  $variables = array(
+    'islandora_aspace_username',
+    'islandora_aspace_password',
+    'islandora_aspace_baseurl',
+    'islandora_aspace_api_key',
+    'islandora_aspace_transform',
+    'islandora_aspace_self_transform',
+    'islandora_aspace_enabled_models',
+    'islandora_aspace_mods_template',
+  );
+  array_walk($variables, 'variable_del');
+}

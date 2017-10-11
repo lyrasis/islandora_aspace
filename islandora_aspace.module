@@ -5,17 +5,14 @@
  * Defines all the hooks this module implements.
  */
 
-// Permissions.
-define('ISLANDORA_ARCHIVESSPACE_API', 'archivesspace rest api');
-
 // Content Model
-define('ISLANDORA_ARCHIVESSPACE_OBJECT_CMODEL', 'islandora:archivesspaceCModel');
+define('ISLANDORA_ASPACE_OBJECT_CMODEL', 'islandora:aspaceCModel');
 
 // DS Name
-define('ISLANDORA_ARCHIVESSPACE_DSID', 'ARCHIVESSPACE');
+define('ISLANDORA_ASPACE_DSID', 'ARCHIVESSPACE');
 
 // Default Mods
-define('ISLANDORA_ARCHIVESSPACE_MODS', <<<MODS
+define('ISLANDORA_ASPACE_MODS', <<<MODS
 <?xml version="1.0"?>
 <mods xmlns="http://www.loc.gov/mods/v3" xmlns:mods="http://www.loc.gov/mods/v3" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xlink="http://www.w3.org/1999/xlink">
   <titleInfo><title>[aspace:title]</title></titleInfo>
@@ -32,13 +29,13 @@ MODS
 /**
  * Implements hook_menu().
  */
-function islandora_archivesspace_menu() {
+function islandora_aspace_menu() {
   $items = array();
   $items['admin/islandora/archivesspace'] = array(
     'title' => 'Islandora ArchivesSpace',
     'description' => 'Configure settings for Islandora ArchivesSpace integration.',
     'page callback' => 'drupal_get_form',
-    'page arguments' => array('islandora_archivesspace_admin_form'),
+    'page arguments' => array('islandora_aspace_admin_form'),
     'file' => 'includes/admin.form.inc',
     'access arguments' => array('administer site configuration'),
   );
@@ -49,17 +46,17 @@ function islandora_archivesspace_menu() {
 /**
  * Implements hook_islandora_ingest_steps()
  */
-function islandora_archivesspace_islandora_ingest_steps(array $form_state) {
+function islandora_aspace_islandora_ingest_steps(array $form_state) {
   $shared_storage = islandora_ingest_form_get_shared_storage($form_state);
-  $intersection = array_intersect($shared_storage['models'], variable_get('islandora_archivesspace_enabled_models', array()));
+  $intersection = array_intersect($shared_storage['models'], variable_get('islandora_aspace_enabled_models', array()));
   if(count($intersection) > 0) {
     return array(
-      'islandora_archivesspace_step_enable_form' => array(
+      'islandora_aspace_step_enable_form' => array(
         'type' => 'form',
         'weight' => -5,
-        'form_id' => 'islandora_archivesspace_step_enable_form',
+        'form_id' => 'islandora_aspace_step_enable_form',
         'file' => 'includes/ingest_steps.inc',
-        'module' => 'islandora_archivesspace',
+        'module' => 'islandora_aspace',
       ),
     );
   }
@@ -68,12 +65,12 @@ function islandora_archivesspace_islandora_ingest_steps(array $form_state) {
 /**
  * Implements hook_islandora_ingest_steps_alter().
  */
-function islandora_archivesspace_islandora_ingest_steps_alter(array &$steps, array &$form_state) {
-  if(!isset($form_state['islandora']['step_storage']['islandora_archivesspace_step_enable_form']['islandora_archivesspace_enable'])){
+function islandora_aspace_islandora_ingest_steps_alter(array &$steps, array &$form_state) {
+  if(!isset($form_state['islandora']['step_storage']['islandora_aspace_step_enable_form']['islandora_aspace_enable'])){
     return;
   }
 
-  $enabled = $form_state['islandora']['step_storage']['islandora_archivesspace_step_enable_form']['islandora_archivesspace_enable'];
+  $enabled = $form_state['islandora']['step_storage']['islandora_aspace_step_enable_form']['islandora_aspace_enable'];
   if($enabled) {
     // Don't use the normal MODs form.
     if(isset($steps['xml_form_builder_metadata_step']) && $steps['xml_form_builder_metadata_step']['args'][0]['dsid'] == 'MODS') {
@@ -86,23 +83,23 @@ function islandora_archivesspace_islandora_ingest_steps_alter(array &$steps, arr
     }
 
     // Do add a basic metadata form for the archivesspace ingest.
-    $steps['islandora_archivesspace_step_metadata_form'] = array(
+    $steps['islandora_aspace_step_metadata_form'] = array(
       'type' => 'form',
       'weight' => -4,
-      'form_id' => 'islandora_archivesspace_step_metadata_form',
+      'form_id' => 'islandora_aspace_step_metadata_form',
       'file' => 'includes/ingest_steps.inc',
-      'module' => 'islandora_archivesspace',
+      'module' => 'islandora_aspace',
     );
 
     // Do add the callback to create the archivesspace object.
-    $steps['islandora_archivesspace_step_object_create_callback'] = array(
+    $steps['islandora_aspace_step_object_create_callback'] = array(
       'type' => 'callback',
       'weight' => 50,
       'do_function' => array(
-        'function' => 'islandora_archivesspace_step_object_create_callback',
+        'function' => 'islandora_aspace_step_object_create_callback',
       ),
       'file' => 'includes/ingest_steps.inc',
-      'module' => 'islandora_archivesspace',
+      'module' => 'islandora_aspace',
     );
   }
 }
@@ -110,11 +107,11 @@ function islandora_archivesspace_islandora_ingest_steps_alter(array &$steps, arr
 /**
  * Implements hook_islandora_required_objects().
  */
-function islandora_archivesspace_islandora_required_objects(IslandoraTuque $connection) {
-  $module_path = drupal_get_path('module', 'islandora_archivesspace');
+function islandora_aspace_islandora_required_objects(IslandoraTuque $connection) {
+  $module_path = drupal_get_path('module', 'islandora_aspace');
 
-  // Large Image Content Model.
-  $aspace_content_model = $connection->repository->constructObject(ISLANDORA_ARCHIVESSPACE_OBJECT_CMODEL);
+  // ArchivesSpace Content Model.
+  $aspace_content_model = $connection->repository->constructObject(ISLANDORA_ASPACE_OBJECT_CMODEL);
   $aspace_content_model->owner = 'fedoraAdmin';
   $aspace_content_model->label = 'Islandora ArchivesSpace Content Model';
   $aspace_content_model->models = 'fedora-system:ContentModel-3.0';
@@ -127,7 +124,7 @@ function islandora_archivesspace_islandora_required_objects(IslandoraTuque $conn
   $aspace_content_model->ingestDatastream($datastream);
 
   return array(
-    'islandora_archivesspace' => array(
+    'islandora_aspace' => array(
       'title' => 'Islandora ArchivesSpace',
       'objects' => array(
         $aspace_content_model,
@@ -139,18 +136,18 @@ function islandora_archivesspace_islandora_required_objects(IslandoraTuque $conn
 /**
  * Implements hook_islandora_undeletable_datastreams().
  */
-function islandora_archivesspace_islandora_undeletable_datastreams(array $models) {
-  if(in_array(ISLANDORA_ARCHIVESSPACE_OBJECT_CMODEL, $models)) {
-    return array(ISLANDORA_ARCHIVESSPACE_DSID, 'MODS');
+function islandora_aspace_islandora_undeletable_datastreams(array $models) {
+  if(in_array(ISLANDORA_ASPACE_OBJECT_CMODEL, $models)) {
+    return array(ISLANDORA_ASPACE_DSID, 'MODS');
   }
 }
 
 /**
  * Implements hook_form_FORM_ID_alter().
  */
-function islandora_archivesspace_form_islandora_object_properties_form_alter(&$form, &$form_state, $form_id) {
+function islandora_aspace_form_islandora_object_properties_form_alter(&$form, &$form_state, $form_id) {
   $object = islandora_object_load($form['pid']['#value']);
-  if(in_array(ISLANDORA_ARCHIVESSPACE_OBJECT_CMODEL, $object->models)) {
+  if(in_array(ISLANDORA_ASPACE_OBJECT_CMODEL, $object->models)) {
     $form['object_state']['#disabled'] = TRUE;
     $form['object_label']['#disabled'] = TRUE;
     $form['archivesspace_info'] = array(
@@ -163,17 +160,17 @@ function islandora_archivesspace_form_islandora_object_properties_form_alter(&$f
 /**
  * Implements hook_hook_theme_registry_alter().
  */
-function islandora_archivesspace_theme_registry_alter(&$theme_registry) {
-  $path = drupal_get_path('module', 'islandora_archivesspace');
+function islandora_aspace_theme_registry_alter(&$theme_registry) {
+  $path = drupal_get_path('module', 'islandora_aspace');
 
   $theme_registry['islandora_default_edit']['includes'][] = "{$path}/includes/theme.inc";
-  $theme_registry['islandora_default_edit']['preprocess functions'][] = 'islandora_archivesspace_preprocess_islandora_default_edit';
+  $theme_registry['islandora_default_edit']['preprocess functions'][] = 'islandora_aspace_preprocess_islandora_default_edit';
 }
 
 /**
  * Implements hook_token_info().
  */
-function islandora_archivesspace_token_info() {
+function islandora_aspace_token_info() {
   $info = array();
 
   $info['types']['aspace'] = array(
@@ -273,7 +270,7 @@ function islandora_archivesspace_token_info() {
 /**
  * Implements hook_tokens().
  */
-function islandora_archivesspace_tokens($type, $tokens, array $data = array(), array $options = array()) {
+function islandora_aspace_tokens($type, $tokens, array $data = array(), array $options = array()) {
   $replacements = array();
 
   if ($type == 'aspace') {
@@ -315,14 +312,14 @@ function islandora_archivesspace_tokens($type, $tokens, array $data = array(), a
 /**
  * Implements hook_services_resources().
  */
-function islandora_archivesspace_services_resources() {
+function islandora_aspace_services_resources() {
   return array(
-    'islandora_archivesspace' => array(
+    'islandora_aspace' => array(
       'create' => array(
         'help' => 'Creates the link from and Islandora object to ArchivesSpace object.',
-        'file' => array('type' => 'inc', 'module' => 'islandora_archivesspace', 'name' => 'includes/rest'),
-        'callback' => 'islandora_archivesspace_rest_create',
-        'access callback' => 'islandora_archivesspace_rest_access',
+        'file' => array('type' => 'inc', 'module' => 'islandora_aspace', 'name' => 'includes/rest'),
+        'callback' => 'islandora_aspace_rest_create',
+        'access callback' => 'islandora_aspace_rest_access',
         'args' => array(
           array(
             'name' => 'pid',
@@ -342,9 +339,9 @@ function islandora_archivesspace_services_resources() {
       ),
       'update' => array(
         'help' => 'Updates an Islandora object with assoicated ArchivesSpace data.',
-        'file' => array('type' => 'inc', 'module' => 'islandora_archivesspace', 'name' => 'includes/rest'),
-        'callback' => 'islandora_archivesspace_rest_update',
-        'access callback' => 'islandora_archivesspace_rest_access',
+        'file' => array('type' => 'inc', 'module' => 'islandora_aspace', 'name' => 'includes/rest'),
+        'callback' => 'islandora_aspace_rest_update',
+        'access callback' => 'islandora_aspace_rest_access',
         'args' => array(
           array(
             'name' => 'pid',
@@ -364,9 +361,9 @@ function islandora_archivesspace_services_resources() {
       ),
       'retrieve' => array(
         'help' => 'Retreieves information about an Islandora objects ArchivesSpace connection.',
-        'file' => array('type' => 'inc', 'module' => 'islandora_archivesspace', 'name' => 'includes/rest'),
-        'callback' => 'islandora_archivesspace_rest_retrieve',
-        'access callback' => 'islandora_archivesspace_rest_access',
+        'file' => array('type' => 'inc', 'module' => 'islandora_aspace', 'name' => 'includes/rest'),
+        'callback' => 'islandora_aspace_rest_retrieve',
+        'access callback' => 'islandora_aspace_rest_access',
         'args' => array(
           array(
             'name' => 'pid',
@@ -379,9 +376,9 @@ function islandora_archivesspace_services_resources() {
       ),
       'delete' => array(
         'help' => 'Updates an islandora to delete archivesspace connection.',
-        'file' => array('type' => 'inc', 'module' => 'islandora_archivesspace', 'name' => 'includes/rest'),
-        'callback' => 'islandora_archivesspace_rest_delete',
-        'access callback' => 'islandora_archivesspace_rest_access',
+        'file' => array('type' => 'inc', 'module' => 'islandora_aspace', 'name' => 'includes/rest'),
+        'callback' => 'islandora_aspace_rest_delete',
+        'access callback' => 'islandora_aspace_rest_access',
         'args' => array(
           array(
             'name' => 'pid',
@@ -399,12 +396,12 @@ function islandora_archivesspace_services_resources() {
 /**
  * Implements hook_ctools_plugin_api().
  */
-function islandora_archivesspace_ctools_plugin_api($owner, $api) {
+function islandora_aspace_ctools_plugin_api($owner, $api) {
   if ($owner == 'services' && $api == 'services') {
     return array(
       'version' => 3,
       'file' => 'rest.inc',
-      'path' => drupal_get_path('module', 'islandora_archivesspace') . '/includes',
+      'path' => drupal_get_path('module', 'islandora_aspace') . '/includes',
     );
   }
 }
@@ -412,14 +409,14 @@ function islandora_archivesspace_ctools_plugin_api($owner, $api) {
 /**
  * Implements hook_cmodel_pid_islandora_object_alter().
  */
-function islandora_archivesspace_islandora_archivesspaceCModel_islandora_object_alter(AbstractObject $object, array &$context) {
-  module_load_include('inc', 'islandora_archivesspace', 'includes/archivesspace');
+function islandora_aspace_islandora_aspaceCModel_islandora_object_alter(AbstractObject $object, array &$context) {
+  module_load_include('inc', 'islandora_aspace', 'includes/archivesspace');
   if($context['action'] == 'purge') {
     $data = json_decode($object['ARCHIVESSPACE']->content, TRUE);
-    $return = islandora_archivesspace_delete_deposit($data['uri']);
+    $return = islandora_aspace_delete_deposit($data['uri']);
     if($return->code != 200) {
       watchdog(
-        'islandora_archivesspace',
+        'islandora_aspace',
         'Unable to notify ArchivesSpace of delete for PID: @pid. Error code: @code. Data: @body.',
         array('@pid' => $object->id, '@code' => $return->code, '@body' => $return->data),
         WATCHDOG_ERROR
