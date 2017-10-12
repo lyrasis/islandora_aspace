@@ -1,5 +1,7 @@
 # Islandora ArchivesSpace
 
+[![Build Status](https://travis-ci.org/lyrasis/islandora_aspace.svg?branch=7.x)](https://travis-ci.org/lyrasis/islandora_aspace)
+
 ## Introduction
 
 This module allows metadata on Islandora to be managed in ArchivesSpace by linking Islandora objects to ArchivesSpace objects. This is accomplished by adding a new ArchivesSpace content model to objects that are being linked to ArchivesSpace objects. 
