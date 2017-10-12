@@ -35,7 +35,7 @@ class AspaceBatchImporter extends ZipBatchImporter {
       }
     }
     else {
-      drupal_set_message('Error contacting ArchivesSpace server. Please try again later.', 'error');
+      drupal_set_message(t('Error contacting ArchivesSpace server. Please try again later.'), 'error');
     }
 
     $form['fs']['aspace'] = array(

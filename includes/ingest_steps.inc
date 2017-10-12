@@ -49,7 +49,7 @@ function islandora_aspace_step_metadata_form(array $form, array &$form_state) {
     }
   }
   else {
-    drupal_set_message('Error contacting ArchivesSpace server. Please try again later.', 'error');
+    drupal_set_message(t('Error contacting ArchivesSpace server. Please try again later.'), 'error');
   }
 
   $form = array();
@@ -130,7 +130,7 @@ function islandora_aspace_step_metadata_form_validate(array $form, array &$form_
       $error_message = "ArchivesSpace Error. Code: {$id->code}. Message: {$id->error}.";
       $error_location = "archivesspace_metadata";
     }
-    form_set_error($error_location, $error_message);
+    form_set_error($error_location, filter_xss($error_message));
   }
 }
 
@@ -199,5 +199,11 @@ function islandora_aspace_step_fom_set_error(array &$form_state, $message) {
   $form_state['islandora']['objects'] = array();
   $form_state['islandora']['shared_storage']['objects'] = array();
   drupal_static_reset('islandora_ingest_form_get_steps');
-  drupal_set_message("Ingest Failed.\n $message.\n Please contact your system administrator.", 'error');
+  drupal_set_message(
+    t(
+      "Ingest Failed.\n @message.\n Please contact your system administrator.",
+      array('@message' => $message)
+    ),
+    'error'
+  );
 }

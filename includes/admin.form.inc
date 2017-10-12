@@ -124,7 +124,7 @@ function islandora_aspace_admin_regen_key(array $form, array &$form_state) {
   module_load_include('inc', 'islandora_aspace', 'includes/utilities');
   $token = islandora_aspace_generate_token();
   variable_set('islandora_aspace_api_key', $token);
-  drupal_set_message("API Key Successfully Regenerated");
+  drupal_set_message(t("API Key Successfully Regenerated"));
 }
 
 /**
