@@ -1,16 +1,27 @@
 <?php
 
-class AspaceBatchImporter Extends ZipBatchImporter {
+/**
+ * @file
+ * Defines an overrided importer for islandora ASpace objects.
+ */
+
+/**
+ * Class for importing ASpace objects with the ZipBatchImporter.
+ */
+class AspaceBatchImporter extends ZipBatchImporter {
 
   protected $itemClass = 'AspaceImportObject';
 
+  /**
+   * Form to show for the importer.
+   */
   public static function getForm(array &$form_state) {
     module_load_include('inc', 'islandora_aspace', 'includes/archivesspace');
 
     $form = parent::getForm($form_state);
     $cm_options = $form['fs']['fs']['content_model']['#options'];
 
-    // Filter content models based on what is enabled for Aspace
+    // Filter content models based on what is enabled for Aspace.
     $aspace_models = variable_get('islandora_aspace_enabled_models');
     $cm_options = array_intersect_key($cm_options, array_flip($aspace_models));
 
@@ -18,8 +29,8 @@ class AspaceBatchImporter Extends ZipBatchImporter {
 
     $repositories = islandora_aspace_get_repositories();
     $options = array();
-    if($repositories !== FALSE) {
-      foreach($repositories as $repository) {
+    if ($repositories !== FALSE) {
+      foreach ($repositories as $repository) {
         $options[$repository->uri] = $repository->name;
       }
     }
@@ -54,18 +65,27 @@ class AspaceBatchImporter Extends ZipBatchImporter {
     return $form;
   }
 
+  /**
+   * Gets the batch information.
+   */
   public static function getBatchInfo(array &$form_state) {
     $info = parent::getBatchInfo($form_state);
     $info['published'] = $form_state['values']['islandora_aspace_published'];
     $info['repository'] = $form_state['values']['islandora_aspace_repository'];
     return $info;
   }
-}
 
-class AspaceImportObject Extends ZipBatchImportObject {
+}
+/**
+ * ASpace override fo the ZipBatchImport Object.
+ */
+class AspaceImportObject extends ZipBatchImportObject {
   protected $repository;
   protected $published;
 
+  /**
+   * Overrides the getOne function, passing on ASpace data.
+   */
   public static function getOne(&$info) {
     $object = parent::getOne($info);
     $object->repository = $info['repository'];
@@ -73,21 +93,36 @@ class AspaceImportObject Extends ZipBatchImportObject {
     return $object;
   }
 
+  /**
+   * Override the wrapper class.
+   */
   public function getWrapperClass() {
     return 'AspaceBatchObject';
   }
 
+  /**
+   * Return the ASpace repository.
+   */
   public function getRepository() {
     return $this->repository;
   }
 
+  /**
+   * Return if the object is published in ASpace.
+   */
   public function getPublished() {
     return $this->published;
   }
+
 }
+/**
+ * Override the ImporterBatchObject.
+ */
+class AspaceBatchObject extends IslandoraImporterBatchObject {
 
-class AspaceBatchObject Extends IslandoraImporterBatchObject {
-
+  /**
+   * Does the normal batch processing, as well as making ASpace deposit.
+   */
   public function batchProcess() {
     module_load_include('inc', 'islandora_aspace', 'includes/utilities');
     module_load_include('inc', 'islandora_aspace', 'includes/archivesspace');
@@ -117,4 +152,5 @@ class AspaceBatchObject Extends IslandoraImporterBatchObject {
 
     return ISLANDORA_BATCH_STATE__DONE;
   }
+
 }

@@ -5,7 +5,6 @@
  * This file contains forms and callbacks used in the ingest hooks.
  */
 
-
 /**
  * Form to select if the integration should be used for a particular object.
  */
@@ -23,7 +22,7 @@ function islandora_aspace_step_enable_form(array $form, array &$form_state) {
     ),
   );
 
-  if(isset($form_state['islandora']['step_storage']['islandora_aspace_step_enable_form']['islandora_aspace_enable'])) {
+  if (isset($form_state['islandora']['step_storage']['islandora_aspace_step_enable_form']['islandora_aspace_enable'])) {
     $form['islandora_aspace_enable']['#default_value'] = $form_state['islandora']['step_storage']['islandora_aspace_step_enable_form']['islandora_aspace_enable'];
   }
 
@@ -44,8 +43,8 @@ function islandora_aspace_step_metadata_form(array $form, array &$form_state) {
   module_load_include('inc', 'islandora_aspace', 'includes/archivesspace');
   $repositories = islandora_aspace_get_repositories();
   $options = array();
-  if($repositories !== FALSE) {
-    foreach($repositories as $repository) {
+  if ($repositories !== FALSE) {
+    foreach ($repositories as $repository) {
       $options[$repository->uri] = $repository->name;
     }
   }
@@ -91,19 +90,19 @@ function islandora_aspace_step_metadata_form(array $form, array &$form_state) {
   $storage = &islandora_ingest_form_get_step_storage($form_state);
   $metadata = &$form['archivesspace_metadata'];
 
-  if(isset($storage['islandora_aspace_title'])) {
+  if (isset($storage['islandora_aspace_title'])) {
     $metadata['islandora_aspace_title']['#default_value'] = $storage['islandora_aspace_title'];
   }
 
-  if(isset($storage['islandora_aspace_identifier'])) {
+  if (isset($storage['islandora_aspace_identifier'])) {
     $metadata['islandora_aspace_identifier']['#default_value'] = $storage['islandora_aspace_identifier'];
   }
 
-  if(isset($storage['islandora_aspace_published'])) {
+  if (isset($storage['islandora_aspace_published'])) {
     $metadata['islandora_aspace_published']['#default_value'] = $storage['islandora_aspace_published'];
   }
 
-  if(isset($storage['islandora_aspace_repository'])) {
+  if (isset($storage['islandora_aspace_repository'])) {
     $form['islandora_aspace_repository']['#default_value'] = $storage['islandora_aspace_repository'];
   }
 
@@ -111,7 +110,7 @@ function islandora_aspace_step_metadata_form(array $form, array &$form_state) {
 }
 
 /**
- * metadata form validate handler
+ * Metadata form validate handler.
  */
 function islandora_aspace_step_metadata_form_validate(array $form, array &$form_state) {
   module_load_include('inc', 'islandora_aspace', 'includes/utilities');
@@ -122,12 +121,12 @@ function islandora_aspace_step_metadata_form_validate(array $form, array &$form_
 
   $id = islandora_aspace_check_identifier($repository, $identifier);
 
-  if($id === TRUE || is_object($id)) {
-    if($id === TRUE) {
+  if ($id === TRUE || is_object($id)) {
+    if ($id === TRUE) {
       $error_message = "Identifier already exists in ArchivesSpace.";
       $error_location = "islandora_aspace_identifier";
     }
-    elseif(is_object($id)) {
+    elseif (is_object($id)) {
       $error_message = "ArchivesSpace Error. Code: {$id->code}. Message: {$id->error}.";
       $error_location = "archivesspace_metadata";
     }
@@ -136,7 +135,7 @@ function islandora_aspace_step_metadata_form_validate(array $form, array &$form_
 }
 
 /**
- * metadata form submit handler
+ * Metadata form submit handler.
  */
 function islandora_aspace_step_metadata_form_submit(array $form, array &$form_state) {
   $storage = &islandora_ingest_form_get_step_storage($form_state);
@@ -166,9 +165,9 @@ function islandora_aspace_step_object_create_callback(array &$form_state) {
   if ($return->code != 200) {
     $error_message = '';
 
-    if(isset($body['error'])) {
-      if(is_array($body['error'])) {
-        foreach($body['error'] as $key => $value) {
+    if (isset($body['error'])) {
+      if (is_array($body['error'])) {
+        foreach ($body['error'] as $key => $value) {
           $error_message .= "$key: {$value[0]} ";
         }
       }
@@ -191,6 +190,9 @@ function islandora_aspace_step_object_create_callback(array &$form_state) {
   islandora_aspace_create_datastreams($object, $body);
 }
 
+/**
+ * Set a form error when ASpace fails.
+ */
 function islandora_aspace_step_fom_set_error(array &$form_state, $message) {
   $form_state['submit_handlers'] = NULL;
   $form_state['validate_handlers'] = NULL;
