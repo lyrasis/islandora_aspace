@@ -5,7 +5,7 @@
  * This file contains utilitiy functions.
  */
 
-function islandora_archivesspace_transform_document($xml_string, $transform_path, $format = TRUE) {
+function islandora_aspace_transform_document($xml_string, $transform_path, $format = TRUE) {
   if($transform_path == 'No Transform') {
     return $xml_string;
   }
@@ -25,8 +25,8 @@ function islandora_archivesspace_transform_document($xml_string, $transform_path
   return $dom->saveXML();
 }
 
-function islandora_archivesspace_preprocess_aspace_data($data) {
-  module_load_include('inc', 'islandora_archivesspace', 'includes/archivesspace');
+function islandora_aspace_preprocess_aspace_data($data) {
+  module_load_include('inc', 'islandora_aspace', 'includes/archivesspace');
 
   $resolveref = function(&$array) use(&$resolveref) {
     if(isset($array['_resolved'])) {
@@ -65,26 +65,26 @@ function islandora_archivesspace_preprocess_aspace_data($data) {
   return $data;
 }
 
-function islandora_archivesspace_create_datastreams($object, $data) {
-  $data = islandora_archivesspace_preprocess_aspace_data($data);
+function islandora_aspace_create_datastreams($object, $data) {
+  $data = islandora_aspace_preprocess_aspace_data($data);
   $json_data = json_encode($data);
-  $json_data = islandora_archivesspace_jsonpp($json_data);
+  $json_data = islandora_aspace_jsonpp($json_data);
 
-  if(!isset($object[ISLANDORA_ARCHIVESSPACE_DSID])) {
-    $aspace_ds = $object->constructDatastream(ISLANDORA_ARCHIVESSPACE_DSID, 'M');
+  if(!isset($object[ISLANDORA_ASPACE_DSID])) {
+    $aspace_ds = $object->constructDatastream(ISLANDORA_ASPACE_DSID, 'M');
     $aspace_ds->label = 'ArchivesSpace JSON Data';
     $aspace_ds->mimetype = 'application/json';
     $aspace_ds->setContentFromString($json_data);
     $object->ingestDatastream($aspace_ds);
   }
   else {
-    $object[ISLANDORA_ARCHIVESSPACE_DSID]->setContentFromString($json_data);
+    $object[ISLANDORA_ASPACE_DSID]->setContentFromString($json_data);
   }
 
-  $mods_template = variable_get('islandora_archivesspace_mods_template', ISLANDORA_ARCHIVESSPACE_MODS);
+  $mods_template = variable_get('islandora_aspace_mods_template', ISLANDORA_ASPACE_MODS);
   $mods_xml = token_replace($mods_template, array('islandora_aspace' => array($object, $data)));
-  $mods_transform = variable_get('islandora_archivesspace_self_transform', 'No Transform');
-  $mods_xml = islandora_archivesspace_transform_document($mods_xml, $mods_transform);
+  $mods_transform = variable_get('islandora_aspace_self_transform', 'No Transform');
+  $mods_xml = islandora_aspace_transform_document($mods_xml, $mods_transform);
 
   if(!isset($object['MODS'])) {
     $mods_ds = $object->constructDatastream('MODS', 'M');
@@ -97,9 +97,9 @@ function islandora_archivesspace_create_datastreams($object, $data) {
     $object['MODS']->setContentFromString($mods_xml);
   }
 
-  $dc_transform = variable_get('islandora_archivesspace_transform', 'No Transform');
+  $dc_transform = variable_get('islandora_aspace_transform', 'No Transform');
   if ($dc_transform != 'No Transform') {
-    $dc_xml = islandora_archivesspace_transform_document($mods_xml, $dc_transform);
+    $dc_xml = islandora_aspace_transform_document($mods_xml, $dc_transform);
     if(!isset($object['DC'])) {
       $dc_ds = $object->constructDatastream('DC', 'X');
       $dc_ds->label = 'DC Record';
@@ -113,7 +113,7 @@ function islandora_archivesspace_create_datastreams($object, $data) {
   }
 }
 
-function islandora_archivesspace_generate_token() {
+function islandora_aspace_generate_token() {
   $length = 40;
   $token = base64_encode(openssl_random_pseudo_bytes($length));
   $token = rtrim($token, '=');
@@ -122,9 +122,9 @@ function islandora_archivesspace_generate_token() {
   return $token;
 }
 
-function islandora_archivesspace_check_identifier($repository_uri, $identifier) {
-  module_load_include('inc', 'islandora_archivesspace', 'includes/archivesspace');
-  $return = islandora_archivesspace_search_repository($repository_uri, "digital_object_id:{$identifier}");
+function islandora_aspace_check_identifier($repository_uri, $identifier) {
+  module_load_include('inc', 'islandora_aspace', 'includes/archivesspace');
+  $return = islandora_aspace_search_repository($repository_uri, "digital_object_id:{$identifier}");
   if($return->code != 200) {
     return $return;
   }
@@ -156,7 +156,7 @@ function islandora_archivesspace_check_identifier($repository_uri, $identifier) 
  *
  * @return string
  */
-function islandora_archivesspace_jsonpp($json, $istr='  ')
+function islandora_aspace_jsonpp($json, $istr='  ')
 {
     $result = '';
     for($p=$q=$i=0; isset($json[$p]); $p++)
