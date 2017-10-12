@@ -18,10 +18,14 @@ before_install:
   - cd $HOME
   - git clone -b 7.x git://github.com/Islandora/islandora.git
   - git clone -b 7.x git://github.com/Islandora/islandora_xml_forms.git
+  - git clone -b 7.x git://github.com/Islandora/php_lib.git
+  - git clone -b 7.x git://github.com/Islandora/objective_forms.git
   - export ISLANDORA_DIR=$HOME/islandora
   - $HOME/islandora/tests/scripts/travis_setup.sh
   - cd $HOME/drupal-*
   - ln -s $HOME/islandora_xml_forms sites/all/modules/islandora_xml_forms
+  - ln -s $HOME/php_lib sites/all/modules/php_lib
+  - ln -s $HOME/objective_forms sites/all/modules/objective_forms
   - ln -s $TRAVIS_BUILD_DIR sites/all/modules/islandora_aspace
   - drush dl --yes services
   - drush en --yes islandora_aspace
