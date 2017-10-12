@@ -163,7 +163,7 @@ function islandora_aspace_form_islandora_object_properties_form_alter(&$form, &$
 function islandora_aspace_theme_registry_alter(&$theme_registry) {
   $path = drupal_get_path('module', 'islandora_aspace');
 
-  $theme_registry['islandora_default_edit']['includes'][] = "{$path}/includes/theme.inc";
+  $theme_registry['islandora_default_edit']['includes'][] = "{$path}/theme/theme.inc";
   $theme_registry['islandora_default_edit']['preprocess functions'][] = 'islandora_aspace_preprocess_islandora_default_edit';
 }
 
