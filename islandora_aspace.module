@@ -441,7 +441,7 @@ function islandora_aspace_islandora_aspaceCModel_islandora_object_alter(Abstract
         ),
         WATCHDOG_ERROR
       );
-      drupal_set_message('Error notifying ArchivesSpace of delete.', 'error');
+      drupal_set_message(t('Error notifying ArchivesSpace of delete.'), 'error');
     }
   }
 }
