@@ -28,7 +28,7 @@ before_install:
   - ln -s $HOME/objective_forms sites/all/modules/objective_forms
   - ln -s $TRAVIS_BUILD_DIR sites/all/modules/islandora_aspace
   - drush dl --yes services
-  - drush en --yes islandora_aspace
+  - drush en --user=1 --yes islandora_aspace
 
 script:
   - $ISLANDORA_DIR/tests/scripts/line_endings.sh sites/all/modules/islandora_aspace
