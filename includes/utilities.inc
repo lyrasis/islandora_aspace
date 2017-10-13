@@ -90,8 +90,8 @@ function islandora_aspace_create_datastreams($object, $data) {
     $object[ISLANDORA_ASPACE_DSID]->setContentFromString($json_data);
   }
 
-  $mods_template = variable_get('islandora_aspace_mods_template', ISLANDORA_ASPACE_MODS);
-  $mods_xml = token_replace($mods_template, array('islandora_aspace' => array($object, $data)));
+  // $mods_template = variable_get('islandora_aspace_mods_template', ISLANDORA_ASPACE_MODS);
+  //  $mods_xml = token_replace($mods_template, array('islandora_aspace' => array($object, $data)));.
   $mods_transform = variable_get('islandora_aspace_self_transform', 'No Transform');
   $mods_xml = islandora_aspace_transform_document($mods_xml, $mods_transform);
 
@@ -151,6 +151,48 @@ function islandora_aspace_check_identifier($repository_uri, $identifier) {
   else {
     return TRUE;
   }
+}
+
+/**
+ * Static loader to get a twig object for use in islandora_aspace.
+ */
+function islandora_aspace_twig() {
+  module_load_include('inc', 'islandora_aspace', 'includes/twig_variable_loader');
+  $twig = &drupal_static(__FUNCTION__);
+  if (!isset($twig)) {
+    $variable_loader = new IslandoraAspaceVariableTwigLoader();
+    $paths = module_invoke_all('islandora_aspace_template_paths');
+    $file_loader = new Twig_Loader_Filesystem($paths);
+    $loader = new Twig_Loader_Chain(array($file_loader, $variable_loader));
+    $twig = new Twig_Environment($loader);
+  }
+  return $twig;
+}
+
+/**
+ * Get a list of possible twig templates.
+ */
+function islandora_aspace_template_list() {
+  module_load_include('inc', 'islandora_aspace', 'includes/twig_variable_loader');
+  $list = array();
+
+  $variable_templates = IslandoraAspaceVariableTwigLoader::list();
+  foreach ($variable_templates as $template) {
+    $list[$template] = $template;
+  }
+
+  $paths = module_invoke_all('islandora_aspace_template_paths');
+  foreach($paths as $path) {
+    $files = scandir($path);
+    foreach($files as $file) {
+      if (is_file($path . DIRECTORY_SEPARATOR . $file)) {
+        $file_exploded = explode('.', $file);
+        $list[$file] = $file_exploded[0];
+      }
+    }
+  }
+
+  return $list;
 }
 
 /**

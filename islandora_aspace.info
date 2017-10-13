@@ -2,7 +2,6 @@ name = Islandora ArchivesSpace
 description = "Integrate the metadata capibilities of ArchivesSpace with Islandora."
 dependencies[] = islandora
 dependencies[] = xml_form_builder
-dependencies[] = token
 dependencies[] = rest_server
 package = Islandora Tools
 version = 7.x-dev

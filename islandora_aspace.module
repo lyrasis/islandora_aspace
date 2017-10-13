@@ -11,20 +11,12 @@ define('ISLANDORA_ASPACE_OBJECT_CMODEL', 'islandora:aspaceCModel');
 // DS Name.
 define('ISLANDORA_ASPACE_DSID', 'ARCHIVESSPACE');
 
-// Default Mods.
-define('ISLANDORA_ASPACE_MODS', <<<MODS
-<?xml version="1.0"?>
-<mods xmlns="http://www.loc.gov/mods/v3" xmlns:mods="http://www.loc.gov/mods/v3" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xlink="http://www.w3.org/1999/xlink">
-  <titleInfo><title>[aspace:title]</title></titleInfo>
-  <subject><topic>[aspace:subjects:0:title]</topic></subject>
-  <subject><topic>[aspace:subjects:1:title]</topic></subject>
-  <subject><topic>[aspace:subjects:2:title]</topic></subject>
-  <subject><topic>[aspace:subjects:3:title]</topic></subject>
-  <subject><topic>[aspace:subjects:4:title]</topic></subject>
-  <subject><topic>[aspace:subjects:5:title]</topic></subject>
-</mods>
-MODS
-);
+/**
+ * Implements hook_init().
+ */
+function islandora_aspace_init() {
+  require_once __DIR__ . "/vendor/autoload.php";
+}
 
 /**
  * Implements hook_menu().
@@ -168,148 +160,6 @@ function islandora_aspace_theme_registry_alter(&$theme_registry) {
 }
 
 /**
- * Implements hook_token_info().
- */
-function islandora_aspace_token_info() {
-  $info = array();
-
-  $info['types']['aspace'] = array(
-    'name' => t('Islandora ArchivesSpace'),
-    'description' => t('Tokens for metadata on Islandora ArchivesSpace objects.'),
-    'needs-data' => 'islandora_aspace',
-  );
-
-  // Simple Aspace Tokens.
-  $info['tokens']['aspace']['title'] = array(
-    'name' => t('Title'),
-    'description' => t('The objects title.'),
-  );
-  $info['tokens']['aspace']['digital_object_id'] = array(
-    'name' => t('Identifier'),
-    'description' => t('The digital identifier.'),
-  );
-  $info['tokens']['aspace']['publish'] = array(
-    'name' => t('Published'),
-    'description' => t('Is the object published or not.'),
-  );
-  $info['tokens']['aspace']['restrictions'] = array(
-    'name' => t('Restrictions'),
-    'description' => t('Indicates that restrictions apply. The restrictions can be explained using Note subrecords or Rights subrecords.'),
-  );
-  $info['tokens']['aspace']['created_by'] = array(
-    'name' => t('Created By'),
-    'description' => t('Indicates who the record was created by.'),
-  );
-  $info['tokens']['aspace']['last_modified_by'] = array(
-    'name' => t('Last Modified By'),
-    'description' => t('Indicates who the record was last modified by.'),
-  );
-  $info['tokens']['aspace']['create_time'] = array(
-    'name' => t('Create Time'),
-    'description' => t('Indicates when the record was created.'),
-  );
-  $info['tokens']['aspace']['suppressed'] = array(
-    'name' => t('Supressed'),
-    'description' => t('Indicates if this record is supressed in ArchivesSpace.'),
-  );
-  $info['tokens']['aspace']['uri'] = array(
-    'name' => t('Uri'),
-    'description' => t('The URI of this object in the ArchivesSpace API.'),
-  );
-
-  // Dynamic Aspace Tokens.
-  $info['tokens']['aspace']['subjects'] = array(
-    'name' => t('Subjects'),
-    'description' => t('Used for linking Subjects with the materials described.'),
-    'dynamic' => TRUE,
-  );
-  $info['tokens']['aspace']['dates'] = array(
-    'name' => t('Dates'),
-    'description' => t('Identifies and records the date(s) that pertain to the creation, assembly, accumulation, and/or maintenance and use of the materials being described.'),
-    'dynamic' => TRUE,
-  );
-  $info['tokens']['aspace']['extents'] = array(
-    'name' => t('Extents'),
-    'description' => t('Indicates the extent and the physical nature of the materials being described.'),
-    'dynamic' => TRUE,
-  );
-  $info['tokens']['aspace']['external_documents'] = array(
-    'name' => t('External Documents'),
-    'description' => t('Links to information in other description or management systems, such as donor files, processing plans, etc.'),
-    'dynamic' => TRUE,
-  );
-  $info['tokens']['aspace']['rights_statements'] = array(
-    'name' => t('Rights Statements'),
-    'description' => t('Information about the rights status of the materials described and whether there are specific restictions or permissions that have been indicated.'),
-    'dynamic' => TRUE,
-  );
-  $info['tokens']['aspace']['linked_agents'] = array(
-    'name' => t('Agent Links'),
-    'description' => t('Associates agents as a creator, source, or subject of the materials described to provide information about their context.'),
-    'dynamic' => TRUE,
-  );
-  $info['tokens']['aspace']['notes'] = array(
-    'name' => t('Notes'),
-    'description' => t('Additional descriptive information about the materials described, usually in the form of text or structured lists.'),
-    'dynamic' => TRUE,
-  );
-  $info['tokens']['aspace']['collection_management'] = array(
-    'name' => t('Collection Management'),
-    'description' => t('Additional, internal-only information about how the materials described will be or have been processed.'),
-    'dynamic' => TRUE,
-  );
-  $info['tokens']['aspace']['user_defined'] = array(
-    'name' => t('User Defined'),
-    'description' => t('User defined fields for recording additional information not captured in other sections of the application.'),
-    'dynamic' => TRUE,
-  );
-
-  return $info;
-}
-
-/**
- * Implements hook_tokens().
- */
-function islandora_aspace_tokens($type, $tokens, array $data = array(), array $options = array()) {
-  $replacements = array();
-
-  if ($type == 'aspace') {
-    if (!isset($data['islandora_aspace'])) {
-      return;
-    }
-
-    list($object, $aspace_data) = $data['islandora_aspace'];
-
-    // Recursively find the token in the array.
-    $process = function ($stack, $original, $data) use (&$process) {
-      $replacements = array();
-      $key = array_pop($stack);
-
-      if (isset($data[$key]) && gettype($data[$key]) === 'string') {
-        $replacements[$original] = $data[$key];
-      }
-      elseif (isset($data[$key]) && gettype($data[$key]) === 'boolean') {
-        $replacements[$original] = $data[$key] ? "true" : "false";
-      }
-      elseif (isset($data[$key]) && gettype($data[$key]) === 'array') {
-        $replacements += $process($stack, $original, $data[$key]);
-      }
-      else {
-        $replacements[$original] = '';
-      }
-      return $replacements;
-    };
-
-    foreach ($tokens as $name => $original) {
-      $exploded = array_reverse(explode(':', $name));
-      $replacements += $process($exploded, $original, $aspace_data);
-    }
-  }
-
-  return $replacements;
-}
-
-/**
  * Implements hook_services_resources().
  */
 function islandora_aspace_services_resources() {
@@ -444,4 +294,13 @@ function islandora_aspace_islandora_aspaceCModel_islandora_object_alter(Abstract
       drupal_set_message(t('Error notifying ArchivesSpace of delete.'), 'error');
     }
   }
+}
+
+/**
+ * Implements hook_islandora_aspace_template_paths().
+ */
+function islandora_aspace_islandora_aspace_template_paths()
+{
+  $module_path = drupal_get_path('module', 'islandora_aspace');
+  return "${module_path}/templates";
 }
