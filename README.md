@@ -10,13 +10,14 @@ This module requires the following modules/libraries:
 
 * [Islandora](https://github.com/islandora/islandora)
 * [Islandora XML Forms](https://github.com/Islandora/islandora_xml_forms)
-* [Drupal Token Module](https://www.drupal.org/project/token)
 * [Drupal Services Module](https://www.drupal.org/project/services)
 * [ArchivesSpace Islandora Plugin](https://github.com/lyrasis/aspace-islandora)
+* [Twig](https://twig.symfony.com)
 
 ## Installation
 
-Install as usual, see [this](https://drupal.org/documentation/install/modules-themes/modules-7) for further information.
+ - install module as usual
+ - run `composer install`
 
 ## Configuration
 
