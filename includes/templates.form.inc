@@ -214,7 +214,7 @@ function islandora_aspace_template_create_form_test(array $form, array &$form_st
     drupal_set_message(t('<pre>@data</pre>', array('data' => $template->render($aspace_data))), 'status');
   }
   catch (Twig_Error $exception) {
-    drupal_set_message(t('@error' array('@error' => $exception->getMessage())), 'error');
+    drupal_set_message(t('@error', array('@error' => $exception->getMessage())), 'error');
   }
 
 }
