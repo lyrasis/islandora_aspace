@@ -1,7 +1,5 @@
 # Islandora ArchivesSpace
 
-[![Build Status](https://travis-ci.org/lyrasis/islandora_aspace.svg?branch=7.x)](https://travis-ci.org/lyrasis/islandora_aspace)
-
 ## Introduction
 
 This module allows metadata on Islandora to be managed in ArchivesSpace by linking Islandora objects to ArchivesSpace objects. This is accomplished by adding a new ArchivesSpace content model to objects that are being linked to ArchivesSpace objects. 
@@ -12,13 +10,14 @@ This module requires the following modules/libraries:
 
 * [Islandora](https://github.com/islandora/islandora)
 * [Islandora XML Forms](https://github.com/Islandora/islandora_xml_forms)
-* [Drupal Token Module](https://www.drupal.org/project/token)
 * [Drupal Services Module](https://www.drupal.org/project/services)
 * [ArchivesSpace Islandora Plugin](https://github.com/lyrasis/aspace-islandora)
+* [Twig](https://twig.symfony.com)
 
 ## Installation
 
-Install as usual, see [this](https://drupal.org/documentation/install/modules-themes/modules-7) for further information.
+ - install module as usual
+ - run `composer install`
 
 ## Configuration
 

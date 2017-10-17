@@ -9,6 +9,9 @@
  * Admin Form for the module.
  */
 function islandora_aspace_admin_form(array $form, array &$form_state) {
+  module_load_include('inc', 'xml_form_builder', 'includes/associations');
+  module_load_include('inc', 'islandora_aspace', 'includes/utilities');
+
   $form = array();
 
   $form['settings'] = array(
@@ -60,8 +63,6 @@ function islandora_aspace_admin_form(array $form, array &$form_state) {
     '#collapsed' => FALSE,
   );
 
-  module_load_include('inc', 'xml_form_builder', 'includes/associations');
-
   $form['settings']['archivesspace_metadata_settings']['islandora_aspace_transform'] = array(
     '#type' => 'select',
     '#title' => t('DC Crosswalk'),
@@ -70,32 +71,12 @@ function islandora_aspace_admin_form(array $form, array &$form_state) {
     '#description' => t("An XSL transform for setting the Fedora object's Dublin Core metadata datastream."),
   );
 
-  $form['settings']['archivesspace_metadata_settings']['islandora_aspace_self_transform'] = array(
+  $form['settings']['archivesspace_metadata_settings']['islandora_aspace_template'] = array(
     '#type' => 'select',
-    '#title' => t('Self XSL Transform'),
-    '#options' => array_flip(xml_form_builder_get_self_transforms()),
-    '#default_value' => variable_get('islandora_aspace_self_transform', 'No Transform'),
-    '#description' => t('An optional transformation applied to mods data from archivesspace prior to ingestion.'),
-  );
-
-  $form['settings']['archivesspace_metadata_settings']['islandora_aspace_mods_template'] = array(
-    '#type' => 'textarea',
-    '#title' => t('MODs Template'),
-    '#default_value' => variable_get('islandora_aspace_mods_template', ISLANDORA_ASPACE_MODS),
-    '#element_validate' => array('token_element_validate'),
-    '#token_types' => array('aspace'),
-  );
-
-  $form['settings']['archivesspace_metadata_settings']['token_tree'] = array(
-    '#type' => 'fieldset',
-    '#title' => t('Replacement patterns'),
-    '#collapsible' => TRUE,
-    '#collapsed' => TRUE,
-    '#description' => theme('token_tree', array(
-      'token_types' => array('aspace'),
-      'global_types' => FALSE,
-    )),
-    '#weight' => 10,
+    '#title' => t('TWIG Template'),
+    '#options' => islandora_aspace_template_list(),
+    '#default_value' => variable_get('islandora_aspace_template', 'Default'),
+    '#description' => t("The TWIG template used to create the MODs metadata for the integration."),
   );
 
   $form['settings']['archivesspace_content_models'] = array(
@@ -118,28 +99,13 @@ function islandora_aspace_admin_form(array $form, array &$form_state) {
 }
 
 /**
- * Function to regenerate the API key.
+ * Function to regenerate the API key and set its variable.
  */
 function islandora_aspace_admin_regen_key(array $form, array &$form_state) {
   module_load_include('inc', 'islandora_aspace', 'includes/utilities');
   $token = islandora_aspace_generate_token();
   variable_set('islandora_aspace_api_key', $token);
   drupal_set_message(t("API Key Successfully Regenerated"));
-}
-
-/**
- * Validate the admin form before submitting.
- */
-function islandora_aspace_admin_form_validate(array $form, array &$form_state) {
-  $old_state = libxml_use_internal_errors(TRUE);
-  libxml_clear_errors();
-  $xml = new DOMDocument();
-  $success = @$xml->loadXML($form_state['input']['islandora_aspace_mods_template']);
-  if (!$success) {
-    $errors = libxml_get_errors();
-    form_set_error('islandora_aspace_mods_template', "XML Parsing Error: {$errors[0]->message}");
-  }
-  libxml_use_internal_errors($old_state);
 }
 
 /**

@@ -1,0 +1,15 @@
+{
+    "name": "lyrasis/islandora_aspace",
+    "description": "Drupal 7 Module for integrating ArchivesSpace and Islandora.",
+    "type": "project",
+    "license": "GPL-3",
+    "authors": [
+        {
+            "name": "Jonathan Green",
+            "email": "jonathan@razzard.com"
+        }
+    ],
+    "require": {
+        "twig/twig": "~2.0"
+    }
+}

@@ -27,9 +27,9 @@ function islandora_aspace_uninstall() {
     'islandora_aspace_baseurl',
     'islandora_aspace_api_key',
     'islandora_aspace_transform',
-    'islandora_aspace_self_transform',
     'islandora_aspace_enabled_models',
-    'islandora_aspace_mods_template',
+    'islandora_aspace_templates',
+    'islandora_aspace_template',
   );
   array_walk($variables, 'variable_del');
 }
