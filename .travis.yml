@@ -32,6 +32,5 @@ before_install:
 
 script:
   - $ISLANDORA_DIR/tests/scripts/line_endings.sh sites/all/modules/islandora_aspace
-  - drush help coder-review
   - drush coder-review --reviews=production,security,style,i18n,potx,sniffer islandora_aspace
   - phpcpd --names *.module,*.inc,*.test,*.php sites/all/modules/islandora_aspace
