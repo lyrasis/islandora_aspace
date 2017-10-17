@@ -23,13 +23,68 @@ function islandora_aspace_init() {
  */
 function islandora_aspace_menu() {
   $items = array();
-  $items['admin/islandora/archivesspace'] = array(
-    'title' => 'Islandora ArchivesSpace',
+
+  $items['admin/islandora/tools/aspace'] = array(
+    'title' => 'ArchivesSpace Integration',
     'description' => 'Configure settings for Islandora ArchivesSpace integration.',
     'page callback' => 'drupal_get_form',
     'page arguments' => array('islandora_aspace_admin_form'),
     'file' => 'includes/admin.form.inc',
     'access arguments' => array('administer site configuration'),
+    'type' => MENU_NORMAL_ITEM,
+  );
+
+  $items['admin/islandora/tools/aspace/config'] = array(
+    'title' => 'Settings',
+    'description' => 'Configure settings for Islandora ArchivesSpace integration.',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('islandora_aspace_admin_form'),
+    'file' => 'includes/admin.form.inc',
+    'access arguments' => array('administer site configuration'),
+    'type' => MENU_DEFAULT_LOCAL_TASK,
+  );
+
+  $items['admin/islandora/tools/aspace/templates'] = array(
+    'title' => 'Templates',
+    'description' => 'Configure metadata templates for integration.',
+    'page callback' => 'islandora_aspace_templates',
+    'file' => 'includes/templates.form.inc',
+    'access arguments' => array('administer site configuration'),
+    'type' => MENU_LOCAL_TASK,
+  );
+
+  $items['admin/islandora/tools/aspace/templates/create'] = array(
+    'title' => 'Create Template',
+    'description' => 'Create a new template.',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('islandora_aspace_template_create_form'),
+    'file' => 'includes/templates.form.inc',
+    'access arguments' => array('administer site configuration'),
+    'type' => MENU_LOCAL_ACTION,
+  );
+
+  $items['admin/islandora/tools/aspace/templates/delete/%'] = array(
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('islandora_aspace_template_delete_form', 6),
+    'file' => 'includes/templates.form.inc',
+    'access arguments' => array('administer site configuration'),
+    'type' => MENU_CALLBACK,
+  );
+
+  $items['admin/islandora/tools/aspace/templates/copy/%'] = array(
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('islandora_aspace_template_copy_form', 6),
+    'file' => 'includes/templates.form.inc',
+    'access arguments' => array('administer site configuration'),
+    'type' => MENU_CALLBACK,
+  );
+
+  $items['admin/islandora/tools/aspace/templates/edit/%'] = array(
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('islandora_aspace_template_create_form', 6),
+    'file' => 'includes/templates.form.inc',
+    'access arguments' => array('administer site configuration'),
+    'type' => MENU_CALLBACK,
   );
 
   return $items;
@@ -299,8 +354,7 @@ function islandora_aspace_islandora_aspaceCModel_islandora_object_alter(Abstract
 /**
  * Implements hook_islandora_aspace_template_paths().
  */
-function islandora_aspace_islandora_aspace_template_paths()
-{
+function islandora_aspace_islandora_aspace_template_paths() {
   $module_path = drupal_get_path('module', 'islandora_aspace');
   return "${module_path}/templates";
 }

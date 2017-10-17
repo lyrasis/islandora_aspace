@@ -75,10 +75,10 @@ function islandora_aspace_admin_form(array $form, array &$form_state) {
     '#type' => 'select',
     '#title' => t('TWIG Template'),
     '#options' => islandora_aspace_template_list(),
-    '#default_value' => variable_get('islandora_aspace_template', 'default'),
+    '#default_value' => variable_get('islandora_aspace_template', 'Default'),
     '#description' => t("The TWIG template used to create the MODs metadata for the integration."),
   );
-  
+
   $form['settings']['archivesspace_content_models'] = array(
     '#type' => 'fieldset',
     '#title' => t('Content Models'),
@@ -106,21 +106,6 @@ function islandora_aspace_admin_regen_key(array $form, array &$form_state) {
   $token = islandora_aspace_generate_token();
   variable_set('islandora_aspace_api_key', $token);
   drupal_set_message(t("API Key Successfully Regenerated"));
-}
-
-/**
- * Validate the admin form before submitting.
- */
-function islandora_aspace_admin_form_validate(array $form, array &$form_state) {
-  // $old_state = libxml_use_internal_errors(TRUE);
-  //  libxml_clear_errors();
-  //  $xml = new DOMDocument();
-  //  $success = @$xml->loadXML($form_state['input']['islandora_aspace_mods_template']);
-  //  if (!$success) {
-  //    $errors = libxml_get_errors();
-  //    form_set_error('islandora_aspace_mods_template', "XML Parsing Error: {$errors[0]->message}");
-  //  }
-  //  libxml_use_internal_errors($old_state);
 }
 
 /**

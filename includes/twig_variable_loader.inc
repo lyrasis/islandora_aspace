@@ -60,26 +60,38 @@ class IslandoraAspaceVariableTwigLoader implements Twig_LoaderInterface {
   /**
    * Used to save a template with variable_set.
    *
-   * @param string $name
-   *   The name of the template to save.
+   * @param string $machine_name
+   *   The machine name of the template to save.
+   * @param string $display_name
+   *   The display name of the template to save.
    * @param string $source
    *   The template to be saved.
    */
-  public static function set($name, $source) {
+  public static function set($machine_name, $display_name, $source) {
     $templates = variable_get('islandora_aspace_templates', array());
-    $templates[$name] = array(
+    $templates[$machine_name] = array(
+      'name' => $display_name,
       'source' => $source,
       'last_modified' => time(),
+      'machine_name' => $machine_name,
     );
+    variable_set('islandora_aspace_templates', $templates);
+  }
+
+  /**
+   * Remove a template from this loader.
+   */
+  public static function remove($machine_name) {
+    $templates = variable_get('islandora_aspace_templates', array());
+    unset($templates[$machine_name]);
     variable_set('islandora_aspace_templates', $templates);
   }
 
   /**
    * Lists all templates registered with this loader.
    */
-  public static function list() {
-    $templates = variable_get('islandora_aspace_templates', array());
-    return array_keys($templates);
+  public static function getAll() {
+    return variable_get('islandora_aspace_templates', array());
   }
 
 }
