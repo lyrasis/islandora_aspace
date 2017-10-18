@@ -11,7 +11,7 @@
 function islandora_aspace_get_uri($data) {
   $uri = isset($data['file_versions'][0]['file_uri']) ? $data['file_versions'][0]['file_uri'] : '';
   $uri = explode('/', $uri);
-  return $uri[count($uri) - 1];
+  return urldecode($uri[count($uri) - 1]);
 }
 
 /**
@@ -50,7 +50,7 @@ function islandora_aspace_rest_create_update($pid, $data, $type) {
 
   islandora_aspace_update_aspace_ds($object, $data);
 
-  $islandora_uri = url("/islandora/object/$identifier", array('absolute' => true));
+  $islandora_uri = url("/islandora/object/$pid", array('absolute' => true));
   return array(
     'uri' => $islandora_uri,
     'pid' => $pid,
@@ -90,7 +90,7 @@ function islandora_aspace_rest_delete($pid) {
   unset($models[$key]);
   $object->models = $models;
 
-  $islandora_uri = $GLOBALS['base_url'] . '/islandora/object/' . $pid;
+  $islandora_uri = url("/islandora/object/$pid", array('absolute' => true));
 
   return array(
     'uri' => $islandora_uri,
@@ -109,7 +109,7 @@ function islandora_aspace_rest_retrieve($pid) {
 
   $aspace = in_array(ISLANDORA_ASPACE_OBJECT_CMODEL, $object->models);
 
-  $islandora_uri = $GLOBALS['base_url'] . '/islandora/object/' . $pid;
+  $islandora_uri = url("/islandora/object/$pid", array('absolute' => true));
 
   return array(
     'uri' => $islandora_uri,
