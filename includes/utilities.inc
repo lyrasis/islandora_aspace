@@ -32,7 +32,7 @@ function islandora_aspace_transform_document($xml_string, $transform_path, $form
  * Mangles the data we get from ASpace to make it a little nicer for templates.
  */
 function islandora_aspace_preprocess_aspace_data($data) {
-  module_load_include('inc', 'islandora_aspace', 'includes/archivesspace');
+  module_load_include('inc', 'islandora_aspace', 'includes/aspace_api');
 
   $resolveref = function (&$array) use (&$resolveref) {
     if (isset($array['_resolved'])) {
@@ -75,9 +75,9 @@ function islandora_aspace_preprocess_aspace_data($data) {
  * Updates ASpace datastreams (including MODS, DC).
  */
 function islandora_aspace_create_datastreams($object, $data) {
+  module_load_include('inc', 'islandora_aspace', 'includes/templates');
   $data = islandora_aspace_preprocess_aspace_data($data);
-  $json_data = json_encode($data);
-  $json_data = islandora_aspace_jsonpp($json_data);
+  $json_data = json_encode($data, JSON_PRETTY_PRINT);
 
   if (!isset($object[ISLANDORA_ASPACE_DSID])) {
     $aspace_ds = $object->constructDatastream(ISLANDORA_ASPACE_DSID, 'M');
@@ -137,7 +137,7 @@ function islandora_aspace_generate_token() {
  * Check if an ASpace identifier exists.
  */
 function islandora_aspace_check_identifier($repository_uri, $identifier) {
-  module_load_include('inc', 'islandora_aspace', 'includes/archivesspace');
+  module_load_include('inc', 'islandora_aspace', 'includes/aspace_api');
   $return = islandora_aspace_search_repository($repository_uri, "digital_object_id:{$identifier}");
   if ($return->code != 200) {
     return $return;
@@ -150,103 +150,4 @@ function islandora_aspace_check_identifier($repository_uri, $identifier) {
   else {
     return TRUE;
   }
-}
-
-/**
- * Static loader to get a twig object for use in islandora_aspace.
- */
-function islandora_aspace_twig() {
-  module_load_include('inc', 'islandora_aspace', 'includes/twig_variable_loader');
-  $twig = &drupal_static(__FUNCTION__);
-  if (!isset($twig)) {
-    $variable_loader = new IslandoraAspaceVariableTwigLoader();
-    $paths = module_invoke_all('islandora_aspace_template_paths');
-    $file_loader = new Twig_Loader_Filesystem($paths);
-    $loader = new Twig_Loader_Chain(array($file_loader, $variable_loader));
-    $twig = new Twig_Environment($loader);
-  }
-  return $twig;
-}
-
-/**
- * Get list of templates returned from hook call.
- */
-function islandora_aspace_hook_template_list() {
-  $list = array();
-
-  $paths = module_invoke_all('islandora_aspace_template_paths');
-  foreach ($paths as $path) {
-    $files = scandir($path);
-    foreach ($files as $file) {
-      if (is_file($path . DIRECTORY_SEPARATOR . $file)) {
-        $file_exploded = explode('.', $file);
-        $list[$file] = $file_exploded[0];
-      }
-    }
-  }
-
-  return $list;
-}
-
-/**
- * Get a list of possible twig templates.
- */
-function islandora_aspace_template_list() {
-  module_load_include('inc', 'islandora_aspace', 'includes/twig_variable_loader');
-  $list = array();
-
-  $variable_templates = IslandoraAspaceVariableTwigLoader::getAll();
-  foreach ($variable_templates as $machine_name => $info) {
-    $list[$machine_name] = $info['name'];
-  }
-
-  return $list + islandora_aspace_hook_template_list();
-}
-
-/**
- * Mangles a template name to be suitable as a machine name.
- */
-function islandora_aspace_template_machine_name($name) {
-  $machine_name = preg_replace('/[^a-z0-9_]+/', '_', strtolower($name));
-  return $machine_name;
-}
-
-/**
- * Jsonpp - Pretty print JSON data.
- *
- * In versions of PHP < 5.4.x, the json_encode() function does not yet provide a
- * pretty-print option. In lieu of forgoing the feature, an additional call can
- * be made to this function, passing in JSON text, and (optionally) a string to
- * be used for indentation.
- *
- * This can be removed and replaced with the native PHP call once Islandora
- * stops supporting PHP 5.3.3.
- *
- * @param string $json
- *   The JSON data, pre-encoded.
- * @param string $istr
- *   The indentation string.
- *
- * @link https://github.com/ryanuber/projects/blob/master/PHP/JSON/jsonpp.php
- *
- * @return string
- *   Pretty printed string.
- */
-function islandora_aspace_jsonpp($json, $istr = '  ') {
-  $result = '';
-  for ($p = $q = $i = 0; isset($json[$p]); $p++) {
-    $json[$p] == '"' && ($p > 0 ? $json[$p - 1] : '') != '\\' && $q = !$q;
-    if (!$q && strstr(" \t\n\r", $json[$p])) {
-      continue;
-    }
-    if (strstr('}]', $json[$p]) && !$q && $i--) {
-      strstr('{[', $json[$p - 1]) || $result .= "\n" . str_repeat($istr, $i);
-    }
-    $result .= $json[$p];
-    if (strstr(',{[', $json[$p]) && !$q) {
-      $i += strstr('{[', $json[$p]) === FALSE ? 0 : 1;
-      strstr('}]', $json[$p + 1]) || $result .= "\n" . str_repeat($istr, $i);
-    }
-  }
-  return $result;
 }

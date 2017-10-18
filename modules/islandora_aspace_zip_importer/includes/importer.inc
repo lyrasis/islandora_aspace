@@ -16,7 +16,7 @@ class AspaceBatchImporter extends ZipBatchImporter {
    * Form to show for the importer.
    */
   public static function getForm(array &$form_state) {
-    module_load_include('inc', 'islandora_aspace', 'includes/archivesspace');
+    module_load_include('inc', 'islandora_aspace', 'includes/aspace_api');
 
     $form = parent::getForm($form_state);
     $cm_options = $form['fs']['fs']['content_model']['#options'];
@@ -125,7 +125,7 @@ class AspaceBatchObject extends IslandoraImporterBatchObject {
    */
   public function batchProcess() {
     module_load_include('inc', 'islandora_aspace', 'includes/utilities');
-    module_load_include('inc', 'islandora_aspace', 'includes/archivesspace');
+    module_load_include('inc', 'islandora_aspace', 'includes/aspace_api');
     $parent_status = parent::batchProcess();
     if ($parent_status != ISLANDORA_BATCH_STATE__DONE) {
       return $parent_status;
