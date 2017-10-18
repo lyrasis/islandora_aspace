@@ -29,7 +29,7 @@ function islandora_aspace_menu() {
     'description' => 'Configure settings for Islandora ArchivesSpace integration.',
     'page callback' => 'drupal_get_form',
     'page arguments' => array('islandora_aspace_admin_form'),
-    'file' => 'includes/admin.form.inc',
+    'file' => 'includes/admin_form.inc',
     'access arguments' => array('administer site configuration'),
     'type' => MENU_NORMAL_ITEM,
   );
@@ -39,7 +39,7 @@ function islandora_aspace_menu() {
     'description' => 'Configure settings for Islandora ArchivesSpace integration.',
     'page callback' => 'drupal_get_form',
     'page arguments' => array('islandora_aspace_admin_form'),
-    'file' => 'includes/admin.form.inc',
+    'file' => 'includes/admin_form.inc',
     'access arguments' => array('administer site configuration'),
     'type' => MENU_DEFAULT_LOCAL_TASK,
   );
@@ -48,7 +48,7 @@ function islandora_aspace_menu() {
     'title' => 'Templates',
     'description' => 'Configure metadata templates for integration.',
     'page callback' => 'islandora_aspace_templates',
-    'file' => 'includes/templates.form.inc',
+    'file' => 'includes/templates_form.inc',
     'access arguments' => array('administer site configuration'),
     'type' => MENU_LOCAL_TASK,
   );
@@ -58,7 +58,7 @@ function islandora_aspace_menu() {
     'description' => 'Create a new template.',
     'page callback' => 'drupal_get_form',
     'page arguments' => array('islandora_aspace_template_create_form'),
-    'file' => 'includes/templates.form.inc',
+    'file' => 'includes/templates_form.inc',
     'access arguments' => array('administer site configuration'),
     'type' => MENU_LOCAL_ACTION,
   );
@@ -66,7 +66,7 @@ function islandora_aspace_menu() {
   $items['admin/islandora/tools/aspace/templates/delete/%'] = array(
     'page callback' => 'drupal_get_form',
     'page arguments' => array('islandora_aspace_template_delete_form', 6),
-    'file' => 'includes/templates.form.inc',
+    'file' => 'includes/templates_form.inc',
     'access arguments' => array('administer site configuration'),
     'type' => MENU_CALLBACK,
   );
@@ -74,7 +74,7 @@ function islandora_aspace_menu() {
   $items['admin/islandora/tools/aspace/templates/copy/%'] = array(
     'page callback' => 'drupal_get_form',
     'page arguments' => array('islandora_aspace_template_copy_form', 6),
-    'file' => 'includes/templates.form.inc',
+    'file' => 'includes/templates_form.inc',
     'access arguments' => array('administer site configuration'),
     'type' => MENU_CALLBACK,
   );
@@ -82,7 +82,7 @@ function islandora_aspace_menu() {
   $items['admin/islandora/tools/aspace/templates/edit/%'] = array(
     'page callback' => 'drupal_get_form',
     'page arguments' => array('islandora_aspace_template_create_form', 6),
-    'file' => 'includes/templates.form.inc',
+    'file' => 'includes/templates_form.inc',
     'access arguments' => array('administer site configuration'),
     'type' => MENU_CALLBACK,
   );
@@ -330,8 +330,8 @@ function islandora_aspace_ctools_plugin_api($owner, $api) {
 /**
  * Implements hook_cmodel_pid_islandora_object_alter().
  */
-function islandora_aspace_islandora_aspaceCModel_islandora_object_alter(AbstractObject $object, array &$context) {
-  module_load_include('inc', 'islandora_aspace', 'includes/archivesspace');
+function islandora_aspace_islandora_aspacecmodel_islandora_object_alter(AbstractObject $object, array &$context) {
+  module_load_include('inc', 'islandora_aspace', 'includes/aspace_api');
   if ($context['action'] == 'purge') {
     $data = json_decode($object['ARCHIVESSPACE']->content, TRUE);
     $return = islandora_aspace_delete_deposit($data['uri']);

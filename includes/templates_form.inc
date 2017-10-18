@@ -9,8 +9,8 @@
  * Template list table.
  */
 function islandora_aspace_templates() {
-  module_load_include('inc', 'islandora_aspace', 'includes/utilities');
-  module_load_include('inc', 'islandora_aspace', 'includes/twig_variable_loader');
+  module_load_include('inc', 'islandora_aspace', 'includes/templates');
+  module_load_include('inc', 'islandora_aspace', 'includes/twig_loader');
 
   $table = array(
     'header' => array(
@@ -64,7 +64,7 @@ function islandora_aspace_templates() {
  * Form for creating and editing templates.
  */
 function islandora_aspace_template_create_form(array $form, array &$form_state, $machine_name = NULL) {
-  module_load_include('inc', 'islandora_aspace', 'includes/twig_variable_loader');
+  module_load_include('inc', 'islandora_aspace', 'includes/twig_loader');
   $info = IslandoraAspaceVariableTwigLoader::get($machine_name);
 
   $form['new'] = array(
@@ -119,8 +119,8 @@ function islandora_aspace_template_create_form(array $form, array &$form_state, 
  * Validation function for template creation form.
  */
 function islandora_aspace_template_create_form_validate(array $form, array &$form_state) {
-  module_load_include('inc', 'islandora_aspace', 'includes/utilities');
-  module_load_include('inc', 'islandora_aspace', 'includes/twig_variable_loader');
+  module_load_include('inc', 'islandora_aspace', 'includes/templates');
+  module_load_include('inc', 'islandora_aspace', 'includes/twig_loader');
 
   $machine_name = islandora_aspace_template_machine_name($form_state['values']['name']);
   $loader = new IslandoraAspaceVariableTwigLoader();
@@ -143,7 +143,9 @@ function islandora_aspace_template_create_form_validate(array $form, array &$for
  * Submission function for template creation form.
  */
 function islandora_aspace_template_create_form_submit(array $form, array &$form_state) {
-  module_load_include('inc', 'islandora_aspace', 'includes/twig_variable_loader');
+  module_load_include('inc', 'islandora_aspace', 'includes/twig_loader');
+  module_load_include('inc', 'islandora_aspace', 'includes/templates
+  ');
   $display_name = $form_state['values']['name'];
   $machine_name = islandora_aspace_template_machine_name($display_name);
   $source = $form_state['values']['source'];
@@ -155,7 +157,7 @@ function islandora_aspace_template_create_form_submit(array $form, array &$form_
  * Form to deleting templates.
  */
 function islandora_aspace_template_delete_form(array $form, array &$form_state, $machine_name) {
-  module_load_include('inc', 'islandora_aspace', 'includes/twig_variable_loader');
+  module_load_include('inc', 'islandora_aspace', 'includes/twig_loader');
   $loader = new IslandoraAspaceVariableTwigLoader();
   if (!$loader->exists($machine_name)) {
     drupal_set_message(t('Template "%name" does not exist.', array('%name' => $machine_name)), 'error');
@@ -192,7 +194,7 @@ function islandora_aspace_template_delete_form(array $form, array &$form_state, 
  * Handler that prints information about templates for testing.
  */
 function islandora_aspace_template_create_form_test(array $form, array &$form_state) {
-  module_load_include('inc', 'islandora_aspace', 'includes/utilities');
+  module_load_include('inc', 'islandora_aspace', 'includes/templates');
   $pid = $form_state['values']['pid'];
   $source = $form_state['values']['source'];
   $object = islandora_object_load($pid);
@@ -223,7 +225,7 @@ function islandora_aspace_template_create_form_test(array $form, array &$form_st
  * Submit function to delete templates.
  */
 function islandora_aspace_template_delete_form_submit(array $form, array &$form_state) {
-  module_load_include('inc', 'islandora_aspace', 'includes/twig_variable_loader');
+  module_load_include('inc', 'islandora_aspace', 'includes/twig_loader');
   $machine_name = $form_state['values']['machine_name'];
   IslandoraAspaceVariableTwigLoader::remove($machine_name);
   $form_state['redirect'] = 'admin/islandora/tools/aspace/templates';
@@ -233,7 +235,7 @@ function islandora_aspace_template_delete_form_submit(array $form, array &$form_
  * Form for copying templates.
  */
 function islandora_aspace_template_copy_form(array $form, array &$form_state, $machine_name) {
-  module_load_include('inc', 'islandora_aspace', 'includes/utilities');
+  module_load_include('inc', 'islandora_aspace', 'includes/templates');
   $twig = islandora_aspace_twig();
   $loader = $twig->getLoader();
   if (!$loader->exists($machine_name)) {

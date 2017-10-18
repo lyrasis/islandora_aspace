@@ -40,7 +40,7 @@ function islandora_aspace_step_enable_form_submit(array $form, array &$form_stat
  * Simple metadata form for archivesspace.
  */
 function islandora_aspace_step_metadata_form(array $form, array &$form_state) {
-  module_load_include('inc', 'islandora_aspace', 'includes/archivesspace');
+  module_load_include('inc', 'islandora_aspace', 'includes/aspace_api');
   $repositories = islandora_aspace_get_repositories();
   $options = array();
   if ($repositories !== FALSE) {
@@ -150,7 +150,7 @@ function islandora_aspace_step_metadata_form_submit(array $form, array &$form_st
  */
 function islandora_aspace_step_object_create_callback(array &$form_state) {
   module_load_include('inc', 'islandora_aspace', 'includes/utilities');
-  module_load_include('inc', 'islandora_aspace', 'includes/archivesspace');
+  module_load_include('inc', 'islandora_aspace', 'includes/aspace_api');
 
   $object = islandora_ingest_form_get_object($form_state);
   $storage = &islandora_ingest_form_get_step_storage($form_state, 'islandora_aspace_step_metadata_form');

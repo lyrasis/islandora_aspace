@@ -10,7 +10,7 @@
  */
 function islandora_aspace_admin_form(array $form, array &$form_state) {
   module_load_include('inc', 'xml_form_builder', 'includes/associations');
-  module_load_include('inc', 'islandora_aspace', 'includes/utilities');
+  module_load_include('inc', 'islandora_aspace', 'includes/templates');
 
   $form = array();
 
