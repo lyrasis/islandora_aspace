@@ -167,6 +167,7 @@ function islandora_aspace_set_aspace_flag(AbstractObject $object, $value) {
   }
 
   if ($current_flag !== NULL) {
+    $object->relationships->autoCommit = FALSE;
     islandora_aspace_remove_aspace_flag($object);
   }
 
@@ -176,6 +177,7 @@ function islandora_aspace_set_aspace_flag(AbstractObject $object, $value) {
     $value ? 'true' : 'false',
     RELS_TYPE_PLAIN_LITERAL
   );
+  $object->relationships->commitRelationships();
 }
 
 /**

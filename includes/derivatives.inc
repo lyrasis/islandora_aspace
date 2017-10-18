@@ -14,6 +14,7 @@ function islandora_aspace_create_aspace_object($object, $force = FALSE) {
 
   $return = array('success' => TRUE, 'messages' => array());
 
+  // If its already been uploaded, or the DS isn't present, then just return.
   if (islandora_aspace_get_aspace_flag($object) || !isset($object[ISLANDORA_ASPACE_DSID])) {
     return $return;
   }
