@@ -67,12 +67,6 @@ function islandora_aspace_step_metadata_form(array $form, array &$form_state) {
     '#required' => TRUE,
   );
 
-  $form['archivesspace_metadata']['islandora_aspace_identifier'] = array(
-    '#type' => 'textfield',
-    '#title' => t('Identifier'),
-    '#required' => TRUE,
-  );
-
   $form['archivesspace_metadata']['islandora_aspace_published'] = array(
     '#type' => 'checkbox',
     '#title' => t('Publish'),
@@ -94,10 +88,6 @@ function islandora_aspace_step_metadata_form(array $form, array &$form_state) {
     $metadata['islandora_aspace_title']['#default_value'] = $storage['islandora_aspace_title'];
   }
 
-  if (isset($storage['islandora_aspace_identifier'])) {
-    $metadata['islandora_aspace_identifier']['#default_value'] = $storage['islandora_aspace_identifier'];
-  }
-
   if (isset($storage['islandora_aspace_published'])) {
     $metadata['islandora_aspace_published']['#default_value'] = $storage['islandora_aspace_published'];
   }
@@ -115,16 +105,15 @@ function islandora_aspace_step_metadata_form(array $form, array &$form_state) {
 function islandora_aspace_step_metadata_form_validate(array $form, array &$form_state) {
   module_load_include('inc', 'islandora_aspace', 'includes/utilities');
 
-  $title = $form_state['values']['islandora_aspace_title'];
-  $identifier = $form_state['values']['islandora_aspace_identifier'];
+  $object = islandora_ingest_form_get_object($form_state);
   $repository = $form_state['values']['islandora_aspace_repository'];
 
-  $id = islandora_aspace_check_identifier($repository, $identifier);
+  $id = islandora_aspace_check_identifier($repository, $object->id);
 
   if ($id === TRUE || is_object($id)) {
     if ($id === TRUE) {
       $error_message = "Identifier already exists in ArchivesSpace.";
-      $error_location = "islandora_aspace_identifier";
+      $error_location = "archivesspace_metadata";
     }
     elseif (is_object($id)) {
       $error_message = "ArchivesSpace Error. Code: {$id->code}. Message: {$id->error}.";
@@ -140,70 +129,22 @@ function islandora_aspace_step_metadata_form_validate(array $form, array &$form_
 function islandora_aspace_step_metadata_form_submit(array $form, array &$form_state) {
   $storage = &islandora_ingest_form_get_step_storage($form_state);
   $storage['islandora_aspace_title'] = $form_state['values']['islandora_aspace_title'];
-  $storage['islandora_aspace_identifier'] = $form_state['values']['islandora_aspace_identifier'];
   $storage['islandora_aspace_repository'] = $form_state['values']['islandora_aspace_repository'];
   $storage['islandora_aspace_published'] = $form_state['values']['islandora_aspace_published'];
 }
 
 /**
- * Callback to create archivesspace object.
+ * Callback to setup the object for aspace.
  */
 function islandora_aspace_step_object_create_callback(array &$form_state) {
   module_load_include('inc', 'islandora_aspace', 'includes/utilities');
-  module_load_include('inc', 'islandora_aspace', 'includes/aspace_api');
 
   $object = islandora_ingest_form_get_object($form_state);
   $storage = &islandora_ingest_form_get_step_storage($form_state, 'islandora_aspace_step_metadata_form');
 
   $title = $storage['islandora_aspace_title'];
-  $identifier = $storage['islandora_aspace_identifier'];
   $repository = $storage['islandora_aspace_repository'];
   $published = $storage['islandora_aspace_published'];
 
-  $return = islandora_aspace_create_deposit($repository, $title, $identifier, $published, $object->id);
-  $body = json_decode($return->data, TRUE);
-  if ($return->code != 200) {
-    $error_message = '';
-
-    if (isset($body['error'])) {
-      if (is_array($body['error'])) {
-        foreach ($body['error'] as $key => $value) {
-          $error_message .= "$key: {$value[0]} ";
-        }
-      }
-      else {
-        $error_message = "ArchivesSpace: {$body['error']}";
-      }
-    }
-    else {
-      $error_message = "ArchivesSpace: {$return->code}: {$return->error}";
-    }
-
-    return islandora_aspace_step_fom_set_error($form_state, $error_message);
-  }
-
-  $object->label = $title;
-  $object->state = $published ? 'A' : 'I';
-  $models = $object->models;
-  $models[] = ISLANDORA_ASPACE_OBJECT_CMODEL;
-  $object->models = $models;
-  islandora_aspace_create_datastreams($object, $body);
-}
-
-/**
- * Set a form error when ASpace fails.
- */
-function islandora_aspace_step_fom_set_error(array &$form_state, $message) {
-  $form_state['submit_handlers'] = NULL;
-  $form_state['validate_handlers'] = NULL;
-  $form_state['islandora']['objects'] = array();
-  $form_state['islandora']['shared_storage']['objects'] = array();
-  drupal_static_reset('islandora_ingest_form_get_steps');
-  drupal_set_message(
-    t(
-      "Ingest Failed.\n @message.\n Please contact your system administrator.",
-      array('@message' => $message)
-    ),
-    'error'
-  );
+  islandora_aspace_setup_object($object, $repository, $title, $published);
 }

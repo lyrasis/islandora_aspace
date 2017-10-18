@@ -5,6 +5,9 @@
  * This file contains utility functions.
  */
 
+// Relations.
+define('ISLANDORA_ASPACE_IN_ASPACE', 'inAspace');
+
 /**
  * Runs an XSLT document on a XML string.
  */
@@ -72,13 +75,44 @@ function islandora_aspace_preprocess_aspace_data($data) {
 }
 
 /**
- * Updates ASpace datastreams (including MODS, DC).
+ * Do initial ASpace object setup.
  */
-function islandora_aspace_create_datastreams($object, $data) {
-  module_load_include('inc', 'islandora_aspace', 'includes/templates');
-  $data = islandora_aspace_preprocess_aspace_data($data);
-  $json_data = json_encode($data, JSON_PRETTY_PRINT);
+function islandora_aspace_setup_object($object, $repository, $title, $published) {
+  // Add the ASpace CModel.
+  $models = $object->models;
+  $models[] = ISLANDORA_ASPACE_OBJECT_CMODEL;
+  $object->models = $models;
 
+  // Set the object label.
+  $object->label = $title;
+
+  // Create intial DS for Aspace.
+  $identifier = $object->id;
+  $json = array();
+  $json['title'] = $title;
+  $json['digital_object_id'] = $identifier;
+  $json['publish'] = $published ? TRUE : FALSE;
+  $json['file_versions'] = array(
+    array(
+      'file_uri' => url(
+        "/islandora/object/$identifier",
+        array('absolute' => TRUE)
+      ),
+    ),
+  );
+  $json['repository'] = array('ref' => $repository);
+  islandora_aspace_update_aspace_ds($object, $json);
+
+  // Set flag in RELS.
+  islandora_aspace_set_aspace_flag($object, FALSE);
+}
+
+/**
+ * Updates or created object based on aspace data.
+ */
+function islandora_aspace_update_aspace_ds($object, $data) {
+  $processed_data = islandora_aspace_preprocess_aspace_data($data);
+  $json_data = json_encode($processed_data, JSON_PRETTY_PRINT);
   if (!isset($object[ISLANDORA_ASPACE_DSID])) {
     $aspace_ds = $object->constructDatastream(ISLANDORA_ASPACE_DSID, 'M');
     $aspace_ds->label = 'ArchivesSpace JSON Data';
@@ -88,36 +122,6 @@ function islandora_aspace_create_datastreams($object, $data) {
   }
   else {
     $object[ISLANDORA_ASPACE_DSID]->setContentFromString($json_data);
-  }
-
-  $mods_template = variable_get('islandora_aspace_template', 'Default');
-  $twig = islandora_aspace_twig();
-  $mods_xml = $twig->render($mods_template, $data);
-
-  if (!isset($object['MODS'])) {
-    $mods_ds = $object->constructDatastream('MODS', 'M');
-    $mods_ds->label = 'MODS Record';
-    $mods_ds->mimetype = 'application/xml';
-    $mods_ds->setContentFromString($mods_xml);
-    $object->ingestDatastream($mods_ds);
-  }
-  else {
-    $object['MODS']->setContentFromString($mods_xml);
-  }
-
-  $dc_transform = variable_get('islandora_aspace_transform', 'No Transform');
-  if ($dc_transform != 'No Transform') {
-    $dc_xml = islandora_aspace_transform_document($mods_xml, $dc_transform);
-    if (!isset($object['DC'])) {
-      $dc_ds = $object->constructDatastream('DC', 'X');
-      $dc_ds->label = 'DC Record';
-      $dc_ds->mimetype = 'application/xml';
-      $dc_ds->setContentFromString($dc_xml);
-      $object->ingestDatastream($dc_ds);
-    }
-    else {
-      $object['DC']->setContentFromString($dc_xml);
-    }
   }
 }
 
@@ -150,4 +154,87 @@ function islandora_aspace_check_identifier($repository_uri, $identifier) {
   else {
     return TRUE;
   }
+}
+
+/**
+ * Set the aspace flag on an object.
+ */
+function islandora_aspace_set_aspace_flag(AbstractObject $object, $value) {
+  $current_flag = islandora_aspace_get_aspace_flag($object);
+
+  if ($current_flag === $value) {
+    return;
+  }
+
+  if ($current_flag !== NULL) {
+    $object->relationships->autoCommit = FALSE;
+    islandora_aspace_remove_aspace_flag($object);
+  }
+
+  $object->relationships->add(
+    ISLANDORA_RELS_EXT_URI,
+    ISLANDORA_ASPACE_IN_ASPACE,
+    $value ? 'true' : 'false',
+    RELS_TYPE_PLAIN_LITERAL
+  );
+  $object->relationships->commitRelationships();
+}
+
+/**
+ * Get the aspace flag on an object.
+ */
+function islandora_aspace_get_aspace_flag(AbstractObject $object) {
+  $results = $object->relationships->get(
+    ISLANDORA_RELS_EXT_URI,
+    ISLANDORA_ASPACE_IN_ASPACE,
+    NULL,
+    RELS_TYPE_PLAIN_LITERAL
+  );
+
+  if (count($results) > 1) {
+    throw new Exception('Too many relationships!');
+  }
+  elseif (count($results) == 0) {
+    return NULL;
+  }
+  else {
+    if ($results[0]['object']['value'] === 'true') {
+      return TRUE;
+    }
+    elseif ($results[0]['object']['value'] === 'false') {
+      return FALSE;
+    }
+    else {
+      throw new Exception('Incorrect literal!');
+    }
+  }
+}
+
+/**
+ * Remove the aspace flag on an object.
+ */
+function islandora_aspace_remove_aspace_flag(AbstractObject $object) {
+  $object->relationships->remove(
+    ISLANDORA_RELS_EXT_URI,
+    ISLANDORA_ASPACE_IN_ASPACE,
+    NULL,
+    RELS_TYPE_PLAIN_LITERAL
+  );
+}
+
+/**
+ * Lint an xml file to make sure its proper XML.
+ */
+function islandora_aspace_lint_xml($xml) {
+  $return = TRUE;
+  $old_state = libxml_use_internal_errors(TRUE);
+  libxml_clear_errors();
+  $document = new DOMDocument();
+  $success = @$document->loadXML($xml);
+  if (!$success) {
+    $errors = libxml_get_errors();
+    $return = $errors[0]->message;
+  }
+  libxml_use_internal_errors($old_state);
+  return $return;
 }

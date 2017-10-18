@@ -125,30 +125,18 @@ class AspaceBatchObject extends IslandoraImporterBatchObject {
    */
   public function batchProcess() {
     module_load_include('inc', 'islandora_aspace', 'includes/utilities');
-    module_load_include('inc', 'islandora_aspace', 'includes/aspace_api');
+
     $parent_status = parent::batchProcess();
     if ($parent_status != ISLANDORA_BATCH_STATE__DONE) {
       return $parent_status;
     }
 
-    $return = islandora_aspace_create_deposit(
+    islandora_aspace_setup_object(
+      $this,
       $this->importerObjectInstance->getRepository(),
       $this->label,
-      $this->id,
-      $this->importerObjectInstance->getPublished(),
-      $this->id
+      $this->importerObjectInstance->getPublished()
     );
-
-    $body = json_decode($return->data, TRUE);
-    if ($return->code != 200) {
-      return ISLANDORA_BATCH_STATE__ERROR;
-    }
-
-    $models = $this->models;
-    $models[] = ISLANDORA_ASPACE_OBJECT_CMODEL;
-    $this->models = $models;
-    $this->state = $published ? 'A' : 'I';
-    islandora_aspace_create_datastreams($this, $body);
 
     return ISLANDORA_BATCH_STATE__DONE;
   }

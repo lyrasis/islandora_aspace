@@ -129,33 +129,20 @@ function islandora_aspace_get_ref($uri) {
 /**
  * Create a deposit against the ASpace Islandora plugin.
  */
-function islandora_aspace_create_deposit($repository_uri, $title, $identifier, $published, $pid) {
+function islandora_aspace_create_deposit($repository, $object, $data) {
   list($success, $session_key) = islandora_aspace_authenticate();
   if (!$success) {
     return $session_key;
   }
 
-  $islandora_uri = $GLOBALS['base_url'] . '/islandora/object/' . $pid;
-
-  // Request to create new object.
-  $json = array();
-  $json['title'] = $title;
-  $json['digital_object_id'] = $identifier;
-  $json['publish'] = $published ? TRUE : FALSE;
-  $json['file_versions'] = array(
-    array(
-      'file_uri' => $islandora_uri,
-    ),
-  );
-
   $url = variable_get('islandora_aspace_baseurl');
-  $url .= '/plugins/aspace_islandora' . $repository_uri . '/islandora_deposits?pid=' . urlencode($pid);
+  $url .= '/plugins/aspace_islandora' . $repository . '/islandora_deposits?pid=' . urlencode($object->id);
 
   return drupal_http_request($url,
     array(
       'method' => 'POST',
       'headers' => array('X-ArchivesSpace-Session' => $session_key),
-      'data' => json_encode($json),
+      'data' => json_encode($data),
     )
   );
 }
