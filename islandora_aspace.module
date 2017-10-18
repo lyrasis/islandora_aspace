@@ -332,7 +332,9 @@ function islandora_aspace_ctools_plugin_api($owner, $api) {
  */
 function islandora_aspace_islandora_aspacecmodel_islandora_object_alter(AbstractObject $object, array &$context) {
   module_load_include('inc', 'islandora_aspace', 'includes/aspace_api');
-  if ($context['action'] == 'purge') {
+  module_load_include('inc', 'islandora_aspace', 'includes/utilities');
+
+  if ($context['action'] == 'purge' && islandora_aspace_get_aspace_flag($object)) {
     $data = json_decode($object['ARCHIVESSPACE']->content, TRUE);
     $return = islandora_aspace_delete_deposit($data['uri']);
     if ($return->code != 200) {
@@ -357,4 +359,47 @@ function islandora_aspace_islandora_aspacecmodel_islandora_object_alter(Abstract
 function islandora_aspace_islandora_aspace_template_paths() {
   $module_path = drupal_get_path('module', 'islandora_aspace');
   return "${module_path}/templates";
+}
+
+
+/**
+ * Implements hook_cmodel_islandora_derivative().
+ */
+function islandora_aspace_islandora_aspacecmodel_islandora_derivative(AbstractObject $object = NULL, $ds_modified_params = array()) {
+  $derivatives = array();
+  $path = drupal_get_path('module', 'islandora_aspace');
+
+  $derivatives[] = array(
+    'source_dsid' => NULL,
+    'destination_dsid' => NULL,
+    'weight' => -10,
+    'function' => array('islandora_aspace_create_aspace_object'),
+    'file' => $path . '/includes/derivatives.inc',
+  );
+
+  $derivatives[] = array(
+    'source_dsid' => ISLANDORA_ASPACE_DSID,
+    'destination_dsid' => NULL,
+    'weight' => 1,
+    'function' => array('islandora_aspace_update_object'),
+    'file' => $path . '/includes/derivatives.inc',
+  );
+
+  $derivatives[] = array(
+    'source_dsid' => ISLANDORA_ASPACE_DSID,
+    'destination_dsid' => 'MODS',
+    'weight' => 10,
+    'function' => array('islandora_aspace_create_mods'),
+    'file' => $path . '/includes/derivatives.inc',
+  );
+
+  $derivatives[] = array(
+    'source_dsid' => 'MODS',
+    'destination_dsid' => 'DC',
+    'weight' => 20,
+    'function' => array('islandora_aspace_create_dc'),
+    'file' => $path . '/includes/derivatives.inc',
+  );
+
+  return $derivatives;
 }

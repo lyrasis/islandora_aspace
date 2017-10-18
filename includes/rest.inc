@@ -41,20 +41,16 @@ function islandora_aspace_rest_create_update($pid, $data, $type) {
     if ($type == 'update') {
       return services_error('Object is not linked to ArchivesSpace.', 406);
     }
-    elseif ($type == 'create') {
+    else {
       $models = $object->models;
       $models[] = ISLANDORA_ASPACE_OBJECT_CMODEL;
       $object->models = $models;
     }
   }
 
-  $object->label = $data['title'];
-  $object->state = $data['publish'] ? 'A' : 'I';
+  islandora_aspace_update_aspace_ds($object, $data);
 
-  islandora_aspace_create_datastreams($object, $data);
-
-  $islandora_uri = $GLOBALS['base_url'] . '/islandora/object/' . $pid;
-
+  $islandora_uri = url("/islandora/object/$identifier", array('absolute' => true));
   return array(
     'uri' => $islandora_uri,
     'pid' => $pid,
