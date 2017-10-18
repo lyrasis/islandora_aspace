@@ -1,24 +1,32 @@
 <?php
 
+/**
+ * @file
+ * Derivative creation functions for the integration module.
+ */
+
+/**
+ * This creates the Digital Object in ASpace using the data in the ASpace DS.
+ */
 function islandora_aspace_create_aspace_object($object, $force = FALSE) {
   module_load_include('inc', 'islandora_aspace', 'includes/aspace_api');
   module_load_include('inc', 'islandora_aspace', 'includes/utilities');
 
-  $return = array('success' => true, 'messages' => array());
+  $return = array('success' => TRUE, 'messages' => array());
 
   if (islandora_aspace_get_aspace_flag($object) || !isset($object[ISLANDORA_ASPACE_DSID])) {
     return $return;
   }
 
   $json = $object[ISLANDORA_ASPACE_DSID]->content;
-  $data = json_decode($json, true);
+  $data = json_decode($json, TRUE);
   $aspace_repo = $data['repository']['ref'];
 
   $aspace = islandora_aspace_create_deposit($aspace_repo, $object, $data);
   $aspace_body = json_decode($aspace->data, TRUE);
 
   if ($aspace->code != 200) {
-    $return['success'] = false;
+    $return['success'] = FALSE;
     if (isset($aspace_body['error'])) {
       if (is_array($aspace_body['error'])) {
         foreach ($aspace_body['error'] as $key => $value) {
@@ -47,35 +55,42 @@ function islandora_aspace_create_aspace_object($object, $force = FALSE) {
         'severity' => WATCHDOG_ERROR,
       );
     }
-  } else {
+  }
+  else {
     islandora_aspace_update_aspace_ds($object, $aspace_body);
-    islandora_aspace_set_aspace_flag($object, true);
+    islandora_aspace_set_aspace_flag($object, TRUE);
   }
 
   return $return;
 }
 
+/**
+ * Updates properties on the object based on the ASpace DS.
+ */
 function islandora_aspace_update_object($object, $force = FALSE) {
   $json = $object[ISLANDORA_ASPACE_DSID]->content;
-  $data = json_decode($json, true);
+  $data = json_decode($json, TRUE);
   $object->label = $data['title'];
   $object->state = $data['publish'] ? 'A' : 'I';
 
-  return array('success' => true, 'messages' => array());
+  return array('success' => TRUE, 'messages' => array());
 }
 
+/**
+ * Create MODs based on the ASpace DS and the selected template.
+ */
 function islandora_aspace_create_mods($object, $force = FALSE) {
   module_load_include('inc', 'islandora_aspace', 'includes/templates');
   module_load_include('inc', 'islandora_aspace', 'includes/utilities');
 
-  $return = array('success' => true, 'messages' => array());
+  $return = array('success' => TRUE, 'messages' => array());
 
   if (isset($object['MODS']) && !$force) {
     return $return;
   }
 
   $json = $object[ISLANDORA_ASPACE_DSID]->content;
-  $data = json_decode($json, true);
+  $data = json_decode($json, TRUE);
   $mods_template = variable_get('islandora_aspace_template', 'Default');
   $twig = islandora_aspace_twig();
 
@@ -83,7 +98,7 @@ function islandora_aspace_create_mods($object, $force = FALSE) {
     $mods_xml = $twig->render($mods_template, $data);
   }
   catch (Twig_Error $e) {
-    $return['success'] = false;
+    $return['success'] = FALSE;
     $return['messages'][] = array(
       'message' => t('Twig Template Error: @error'),
       'message_sub' => array('@error' => $e->getMessage()),
@@ -94,8 +109,8 @@ function islandora_aspace_create_mods($object, $force = FALSE) {
   }
 
   $lint = islandora_aspace_lint_xml($mods_xml);
-  if ($lint !== true) {
-    $return['success'] = false;
+  if ($lint !== TRUE) {
+    $return['success'] = FALSE;
     $return['messages'][] = array(
       'message' => t('XML Parsing Error: @error'),
       'message_sub' => array('@error' => $lint),
@@ -119,9 +134,12 @@ function islandora_aspace_create_mods($object, $force = FALSE) {
   return $return;
 }
 
+/**
+ * Create DC datastream based on the MODs.
+ */
 function islandora_aspace_create_dc($object, $force = FALSE) {
   module_load_include('inc', 'islandora_aspace', 'includes/utilities');
-  $return = array('success' => true, 'messages' => array());
+  $return = array('success' => TRUE, 'messages' => array());
 
   if (isset($object['DC']) && !$force) {
     return $return;

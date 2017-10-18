@@ -361,7 +361,6 @@ function islandora_aspace_islandora_aspace_template_paths() {
   return "${module_path}/templates";
 }
 
-
 /**
  * Implements hook_cmodel_islandora_derivative().
  */

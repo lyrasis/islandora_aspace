@@ -77,13 +77,13 @@ function islandora_aspace_preprocess_aspace_data($data) {
 /**
  * Do initial ASpace object setup.
  */
-function islandora_aspace_setup_object($object, $repository, $title, $published)  {
-  // Add the ASpace CModel
+function islandora_aspace_setup_object($object, $repository, $title, $published) {
+  // Add the ASpace CModel.
   $models = $object->models;
   $models[] = ISLANDORA_ASPACE_OBJECT_CMODEL;
   $object->models = $models;
 
-  // Set the object label
+  // Set the object label.
   $object->label = $title;
 
   // Create intial DS for Aspace.
@@ -96,15 +96,15 @@ function islandora_aspace_setup_object($object, $repository, $title, $published)
     array(
       'file_uri' => url(
         "/islandora/object/$identifier",
-        array('absolute' => true)
-      )
+        array('absolute' => TRUE)
+      ),
     ),
   );
   $json['repository'] = array('ref' => $repository);
   islandora_aspace_update_aspace_ds($object, $json);
 
-  // Set flag in RELS
-  islandora_aspace_set_aspace_flag($object, false);
+  // Set flag in RELS.
+  islandora_aspace_set_aspace_flag($object, FALSE);
 }
 
 /**
@@ -166,7 +166,7 @@ function islandora_aspace_set_aspace_flag(AbstractObject $object, $value) {
     return;
   }
 
-  if ($current_flag !== null) {
+  if ($current_flag !== NULL) {
     islandora_aspace_remove_aspace_flag($object);
   }
 
@@ -185,7 +185,7 @@ function islandora_aspace_get_aspace_flag(AbstractObject $object) {
   $results = $object->relationships->get(
     ISLANDORA_RELS_EXT_URI,
     ISLANDORA_ASPACE_IN_ASPACE,
-    null,
+    NULL,
     RELS_TYPE_PLAIN_LITERAL
   );
 
@@ -193,14 +193,14 @@ function islandora_aspace_get_aspace_flag(AbstractObject $object) {
     throw new Exception('Too many relationships!');
   }
   elseif (count($results) == 0) {
-    return null;
+    return NULL;
   }
   else {
     if ($results[0]['object']['value'] === 'true') {
-      return true;
+      return TRUE;
     }
     elseif ($results[0]['object']['value'] === 'false') {
-      return false;
+      return FALSE;
     }
     else {
       throw new Exception('Incorrect literal!');
@@ -221,10 +221,10 @@ function islandora_aspace_remove_aspace_flag(AbstractObject $object) {
 }
 
 /**
- * Lint an xml file to make sure its proper XML
+ * Lint an xml file to make sure its proper XML.
  */
 function islandora_aspace_lint_xml($xml) {
-  $return = true;
+  $return = TRUE;
   $old_state = libxml_use_internal_errors(TRUE);
   libxml_clear_errors();
   $document = new DOMDocument();
