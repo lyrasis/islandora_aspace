@@ -1,0 +1,18 @@
+sudo: false
+dist: trusty
+language: php
+
+php:
+  - 7.0
+  - 7.1
+
+branches:
+  only:
+    - /^7.x/
+
+before_install:
+  - composer install
+
+script:
+  - vendor/bin/phpcs --standard=Drupal --ignore=vendor,*.md,*.info .
+  - vendor/bin/phpcpd --exclude=vendor --names *.module,*.inc .
