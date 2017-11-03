@@ -46,7 +46,7 @@ This module requires the following modules/libraries:
 - On the *Templates* Tab:
   - Here you can *copy*, *edit* or *delete* templates defined for your instance. These templates are used to convert the data coming from ArchivesSpace (found in JSON format in the `ARCHIVESSPACE` datastream) to the `MODS` datastream used in Islandora. 
   - These templates are written using the [TWIG templating system](https://twig.symfony.com/doc/2.x/templates.html). 
-  - A very basic template used as the default for the module is available [here](https://github.com/lyrasis/islandora_aspace/blob/7.x/templates/Default.twig). 
+  - A very basic template used as the default for the module is available [here](templates/Default.twig). 
   - Pull requests to add more detailed default templates are very welcome.
 
 ## Notes
@@ -56,6 +56,7 @@ This module requires the following modules/libraries:
  - This module has been tested with Islandora:
    - 7.x-1.8
    - 7.x-1.10
+ - Hook documentation available in the [islandora_aspace.api.php](islandora_aspace.api.php) file.
 
 ## Troubleshooting/Issues
 
