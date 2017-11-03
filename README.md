@@ -15,15 +15,24 @@ This module requires the following modules/libraries:
 * [Drupal Services Module](https://www.drupal.org/project/services)
 * [ArchivesSpace Islandora Plugin](https://github.com/lyrasis/aspace-islandora)
 * [Twig](https://twig.symfony.com)
+* [Composer](https://getcomposer.org)
 
 ## Installation
 
- - install module as usual
- - run `composer install --no-dev`
+ - Make sure [composer](https://getcomposer.org) is installed and available on the system.
+   - Composer is used to install the Twig dependancy.
+ - [Install](https://www.drupal.org/docs/7/extending-drupal-7/installing-drupal-7-contributed-modules) Drupal dependancies:
+   * [Islandora](https://github.com/islandora/islandora)
+   * [Islandora XML Forms](https://github.com/Islandora/islandora_xml_forms)
+   * [Drupal Services Module](https://www.drupal.org/project/services)
+ - [Install module](https://www.drupal.org/docs/7/extending-drupal-7/installing-drupal-7-contributed-modules) into Drupal.  
+ - Run `composer install --no-dev` in module directory.
+ - Install Archivesspace plugin on your ASpace server.
 
 ## Configuration
 
-This module has a counterpart plugin for ArchivesSpace that also needs to be configured. 
+- This module has a counterpart plugin for ArchivesSpace that also needs to be configured. Details on configuring that module are available in the [plugins readme file](https://github.com/lyrasis/aspace-islandora/blob/master/README.md#requirements).
+- All settings for this module are available at the settings page. It can be found in the menu at: `Islandora > Utility Modules > ArchivesSpace Integration`
 
 ## Documentation
 
