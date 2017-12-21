@@ -18,6 +18,6 @@
         "dealerdirect/phpcodesniffer-composer-installer": "^0.4.3"
     },
     "platform": {
-        "php": "5.5"
+        "php": "5.6"
     }
 }
