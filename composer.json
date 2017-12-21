@@ -10,11 +10,14 @@
         }
     ],
     "require": {
-        "twig/twig": "~2.0"
+        "twig/twig": "~1.0"
     },
     "require-dev": {
         "drupal/coder": "^8.2",
         "sebastian/phpcpd": "^3.0",
         "dealerdirect/phpcodesniffer-composer-installer": "^0.4.3"
+    },
+    "platform": {
+        "php": "5.5"
     }
 }

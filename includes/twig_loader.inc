@@ -3,17 +3,24 @@
 /**
  * This Twig_LoaderInterface is used to load templates from drupal variables.
  */
-class IslandoraAspaceVariableTwigLoader implements Twig_LoaderInterface {
+class IslandoraAspaceVariableTwigLoader implements Twig_LoaderInterface, Twig_ExistsLoaderInterface, Twig_SourceContextLoaderInterface {
+
+  /**
+   * Returns the source for a given template name.
+   */
+  public function getSource($name) {
+    if (FALSE === $data = self::get($name)) {
+      throw new Twig_Error_Loader(sprintf('Template "%s" does not exist.', $name));
+    }
+
+    return $data['source'];
+  }
 
   /**
    * Returns the twig source for a given template name.
    */
   public function getSourceContext($name) {
-    if (FALSE === $data = self::get($name)) {
-      throw new Twig_Error_Loader(sprintf('Template "%s" does not exist.', $name));
-    }
-
-    return new Twig_Source($data['source'], $name);
+    return new Twig_Source($this->getSource($name), $name);
   }
 
   /**
