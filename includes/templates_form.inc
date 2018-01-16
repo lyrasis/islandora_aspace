@@ -196,6 +196,13 @@ function islandora_aspace_template_delete_form(array $form, array &$form_state, 
 function islandora_aspace_template_create_form_test(array $form, array &$form_state) {
   module_load_include('inc', 'islandora_aspace', 'includes/templates');
   module_load_include('inc', 'islandora_aspace', 'includes/utilities');
+
+  // Don't enter this validation, if other errors detected. We do this so we don't
+  // get the same error being shown to the user twice.
+  if (form_get_errors()) {
+    return;
+  }
+
   $pid = $form_state['values']['pid'];
   $source = $form_state['values']['source'];
   $object = islandora_object_load($pid);
