@@ -121,6 +121,8 @@ function islandora_aspace_create_mods($object, $force = FALSE) {
     return $return;
   }
 
+  $mods_xml = islandora_aspace_pretty_xml($mods_xml);
+
   if (!isset($object['MODS'])) {
     $mods_ds = $object->constructDatastream('MODS', 'M');
     $mods_ds->label = 'MODS Record';

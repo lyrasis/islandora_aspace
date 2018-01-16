@@ -195,6 +195,7 @@ function islandora_aspace_template_delete_form(array $form, array &$form_state, 
  */
 function islandora_aspace_template_create_form_test(array $form, array &$form_state) {
   module_load_include('inc', 'islandora_aspace', 'includes/templates');
+  module_load_include('inc', 'islandora_aspace', 'includes/utilities');
   $pid = $form_state['values']['pid'];
   $source = $form_state['values']['source'];
   $object = islandora_object_load($pid);
@@ -213,7 +214,21 @@ function islandora_aspace_template_create_form_test(array $form, array &$form_st
 
   try {
     $template = $twig->createTemplate($source);
-    drupal_set_message(t('<pre>@data</pre>', array('@data' => $template->render($aspace_data))), 'status');
+    $xml = $template->render($aspace_data);
+    $lint = islandora_aspace_lint_xml($xml);
+    if ($lint !== TRUE) {
+      drupal_set_message(
+        t(
+          'XML Parsing Error: @error<br/><pre>@xml</pre>',
+          array('@error' => $lint, '@xml' => $xml)
+        ),
+        'error'
+      );
+    }
+    else {
+      $xml = islandora_aspace_pretty_xml($xml);
+      drupal_set_message(t('<pre>@data</pre>', array('@data' => $xml)), 'status');
+    }
   }
   catch (Twig_Error $exception) {
     drupal_set_message(t('@error', array('@error' => $exception->getMessage())), 'error');

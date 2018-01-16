@@ -233,8 +233,19 @@ function islandora_aspace_lint_xml($xml) {
   $success = @$document->loadXML($xml);
   if (!$success) {
     $errors = libxml_get_errors();
-    $return = $errors[0]->message;
+    $return = $errors[0]->message . ' at line ' . $errors[0]->line . '.';
   }
   libxml_use_internal_errors($old_state);
   return $return;
+}
+
+/**
+ * Return a pretty printed XML string.
+ */
+function islandora_aspace_pretty_xml($xml) {
+  $document = new DOMDocument();
+  $document->formatOutput = TRUE;
+  $document->preserveWhiteSpace = FALSE;
+  $document->loadXML($xml);
+  return $document->saveXML();
 }
