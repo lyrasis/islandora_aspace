@@ -1,7 +1,40 @@
-<?xml version="1.0"?>
+<?xml version="1.0" encoding="UTF-8"?>
 <mods xmlns="http://www.loc.gov/mods/v3" xmlns:mods="http://www.loc.gov/mods/v3" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xlink="http://www.w3.org/1999/xlink">
-    <titleInfo><title>{{ title }}</title></titleInfo>
-    {% for subject in subjects %}
-        <subject><topic>{{ subject.title }}</topic></subject>
-    {% endfor %}
+{# Title Section #}
+  <titleInfo>
+    <title>{{ title }}</title>
+  </titleInfo>
+{# Subject Section #}
+{% for subject in subjects %}
+  <subject authority="{{ subject.source }}">
+  {% for term in subject.terms %}
+    {% if term.term_type == 'geographic' %}
+      <geographic>{{ term.term }}</geographic>
+    {% elseif term.term_type == 'temporal' %}
+      <temporal>{{ term.term }}</temporal>
+    {% else %}
+      <topic>{{ term.term }}</topic>
+    {% endif %}
+  {% endfor %}
+  </subject>
+{% endfor %}
+{# Agents Section #}
+{% for agent in linked_agents %}
+  <name
+    {% if agent.agent_type == 'agent_person' %}
+      type="person"
+    {% elseif agent.agent_type == 'agent_software' or agent.agent_type == 'agent_corporate' %}
+      type="corporate"
+    {% elseif agent.agent_type == 'agent_family' %}
+      type="family"
+    {% endif %}
+  >
+    <role>
+      <roleTerm type="text">
+        {{ agent.role }}
+      </roleTerm>
+    </role>
+    <namePart>{{ agent.title }}</namePart>
+  </name>
+{%- endfor %}
 </mods>
