@@ -197,8 +197,8 @@ function islandora_aspace_template_create_form_test(array $form, array &$form_st
   module_load_include('inc', 'islandora_aspace', 'includes/templates');
   module_load_include('inc', 'islandora_aspace', 'includes/utilities');
 
-  // Don't enter this validation, if other errors detected. We do this so we don't
-  // get the same error being shown to the user twice.
+  // Don't enter this validation, if other errors detected. We do this so we
+  // don't get the same error being shown to the user twice.
   if (form_get_errors()) {
     return;
   }
