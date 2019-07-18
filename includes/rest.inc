@@ -15,7 +15,7 @@ function islandora_aspace_get_uri($data) {
 }
 
 /**
- * Become ASpace User
+ * Become ASpace User.
  */
 function islandora_aspace_become_authenticated_user() {
   global $user;
@@ -23,7 +23,6 @@ function islandora_aspace_become_authenticated_user() {
   $user = user_load_by_name('aspace_integration');
   drupal_static_reset('islandora_get_tuque_connection');
 }
-
 
 /**
  * Function called for POST and PUT requests from ASpace.

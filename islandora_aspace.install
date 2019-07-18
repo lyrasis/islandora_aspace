@@ -15,10 +15,10 @@ function islandora_aspace_install() {
   islandora_install_solution_pack('islandora_aspace');
   variable_set('islandora_aspace_api_key', islandora_aspace_generate_token());
 
-  // Add integration user
+  // Add integration user.
   user_save(NULL, array(
     'name' => 'aspace_integration',
-    'status' => 0
+    'status' => 0,
   ));
 }
 
@@ -44,9 +44,9 @@ function islandora_aspace_uninstall() {
  * Add new aspace user.
  */
 function islandora_aspace_update_7001() {
-  // Add integration user
+  // Add integration user.
   user_save(NULL, array(
     'name' => 'aspace_integration',
-    'status' => 0
+    'status' => 0,
   ));
 }
