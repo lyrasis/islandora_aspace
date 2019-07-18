@@ -15,6 +15,17 @@ function islandora_aspace_get_uri($data) {
 }
 
 /**
+ * Become ASpace User
+ */
+function islandora_aspace_become_authenticated_user() {
+  global $user;
+  drupal_save_session(FALSE);
+  $user = user_load_by_name('aspace_integration');
+  drupal_static_reset('islandora_get_tuque_connection');
+}
+
+
+/**
  * Function called for POST and PUT requests from ASpace.
  */
 function islandora_aspace_rest_create_update($pid, $data, $type) {
@@ -61,6 +72,7 @@ function islandora_aspace_rest_create_update($pid, $data, $type) {
  * Function called for PUT requests to integration.
  */
 function islandora_aspace_rest_update($pid, $data) {
+  islandora_aspace_become_authenticated_user();
   return islandora_aspace_rest_create_update($pid, $data, 'update');
 }
 
@@ -68,6 +80,7 @@ function islandora_aspace_rest_update($pid, $data) {
  * Function called for POST requests to integration.
  */
 function islandora_aspace_rest_create($pid, $data) {
+  islandora_aspace_become_authenticated_user();
   return islandora_aspace_rest_create_update($pid, $data, 'create');
 }
 
@@ -75,6 +88,7 @@ function islandora_aspace_rest_create($pid, $data) {
  * Function called for DELETE requests to integration.
  */
 function islandora_aspace_rest_delete($pid) {
+  islandora_aspace_become_authenticated_user();
   $object = islandora_object_load($pid);
   if (!$object) {
     return services_error("Unable to load object $pid.", 404);
@@ -102,6 +116,7 @@ function islandora_aspace_rest_delete($pid) {
  * Function called for GET requests to integration.
  */
 function islandora_aspace_rest_retrieve($pid) {
+  islandora_aspace_become_authenticated_user();
   $object = islandora_object_load($pid);
   if (!$object) {
     return services_error("Unable to load object $pid.", 404);
